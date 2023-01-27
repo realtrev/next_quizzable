@@ -13,6 +13,11 @@ h6 {
 }
 
 p {
-  font-family: "Montserrat", sans-serif;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 500;
+}
+
+input {
+  font-family: "Open Sans", sans-serif;
   font-weight: 500;
 }

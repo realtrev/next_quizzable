@@ -8,7 +8,7 @@ module.exports = {
         primary: "#F55536",
         secondary: "#FABC3C",
         accent: "#1BC2C1",
-        offwhite: "#F2F2F2",
+        offwhite: "#F6F6F6",
         heading: "#1E1E1E",
         subheading: "#1E1E1E",
         body: "#1E1E1E",
