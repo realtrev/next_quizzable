@@ -1,16 +1,56 @@
-import Head from "next/head";
+"use client";
+import PocketBase from "pocketbase";
+import { useRouter } from "next/navigation";
 
 function Home() {
+  const router = useRouter();
+
+  async function handleLogin(type: "email" | "google") {
+    const pb = new PocketBase("https://quizzable.trevord.live");
+
+    // handle email login
+    if (type === "email") {
+      return;
+    }
+
+    // handle google login
+    if (type === "google") {
+      console.log("Logging in with Google");
+
+      const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI || "";
+
+      // get a list of auth methods
+      const providerData = await pb.collection("users").listAuthMethods();
+      console.log(providerData);
+
+      if (!providerData) {
+        console.warn("No auth providers found");
+        return;
+      }
+
+      const googleProvider = providerData.authProviders?.find(
+        (p) => p.name === "google"
+      );
+
+      if (!googleProvider) {
+        console.warn("No Google provider found");
+        return;
+      }
+
+      const authUrl = googleProvider.authUrl;
+
+      if (!authUrl) {
+        console.warn("No auth URL found for Google");
+        return;
+      }
+
+      // redirect to auth URL
+      window.location.href = `${authUrl}${encodeURIComponent(redirectUri)}`;
+    }
+  }
+
   return (
     <div className="bg-white">
-      <Head>
-        <title>Quizzable</title>
-        <meta
-          name="description"
-          content="Quizzable is an app designed to help you study."
-        />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
       <main className="flex min-h-screen flex-col items-center justify-center">
         <div className="container flex flex-col items-center justify-center gap-4 px-4 py-16">
           <h1 className="select-none text-6xl font-medium tracking-tight text-primary">
@@ -23,12 +63,13 @@ function Home() {
           </div>
           <div className="flex flex-col">
             <div>
-              <button
+              <a
                 type="button"
                 className="flex h-12 w-80 items-center justify-center rounded border border-gray-200 bg-opacity-0 px-3 text-sm font-medium text-subheading outline-none placeholder:text-gray-300 hover:bg-offwhite focus:border-primary"
+                onClick={() => handleLogin("google")}
               >
                 <span className="ml-5">Continue with Google</span>
-              </button>
+              </a>
             </div>
             <div>
               <p className="mt-6 w-full select-none text-center text-xs font-medium text-gray-500">
