@@ -1,7 +1,6 @@
-import { type NextPage } from "next";
 import Head from "next/head";
 
-const Home: NextPage = () => {
+function Home() {
   return (
     <div className="bg-white">
       <Head>
@@ -29,14 +28,6 @@ const Home: NextPage = () => {
                 className="flex h-12 w-80 items-center justify-center rounded border border-gray-200 bg-opacity-0 px-3 text-sm font-medium text-subheading outline-none placeholder:text-gray-300 hover:bg-offwhite focus:border-primary"
               >
                 <span className="ml-5">Continue with Google</span>
-              </button>
-            </div>
-            <div>
-              <button
-                type="button"
-                className="mt-2 flex h-12 w-80 items-center justify-center rounded border border-gray-200 bg-opacity-0 px-3 text-sm font-medium text-subheading outline-none placeholder:text-gray-300 hover:bg-offwhite focus:border-primary"
-              >
-                <span className="ml-5">Continue with Microsoft</span>
               </button>
             </div>
             <div>
@@ -89,6 +80,6 @@ const Home: NextPage = () => {
       </main>
     </div>
   );
-};
+}
 
 export default Home;

@@ -1,11 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./src/**/*.{js,ts,jsx,tsx}"],
+  content: ["./app/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       colors: {
         // bright blue for primary color
-        primary: "#F55536",
+        primary: "#0197F6",
         secondary: "#FABC3C",
         accent: "#1BC2C1",
         offwhite: "#F6F6F6",
