@@ -1,13 +1,16 @@
 "use client";
 import PocketBase from "pocketbase";
 import { useRouter } from "next/navigation";
+import { getAuthData } from "../auth";
+import { useEffect, useState } from "react";
+import Loading from "../loading";
 
-function Home() {
+function Page() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const pb = new PocketBase("https://quizzable.trevord.live");
 
   async function handleLogin(type: "email" | "google") {
-    const pb = new PocketBase("https://quizzable.trevord.live");
-
     // handle email login
     if (type === "email") {
       return;
@@ -20,33 +23,38 @@ function Home() {
       const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI || "";
 
       // get a list of auth methods
-      const providerData = await pb.collection("users").listAuthMethods();
-      console.log(providerData);
-
-      if (!providerData) {
-        console.warn("No auth providers found");
+      const provider = await getAuthData("google");
+      if (!provider) {
+        console.error("No auth provider found");
         return;
       }
 
-      const googleProvider = providerData.authProviders?.find(
-        (p) => p.name === "google"
-      );
+      // save the state to local storage
+      localStorage.setItem("provider", JSON.stringify(provider));
 
-      if (!googleProvider) {
-        console.warn("No Google provider found");
-        return;
-      }
-
-      const authUrl = googleProvider.authUrl;
-
-      if (!authUrl) {
-        console.warn("No auth URL found for Google");
-        return;
-      }
+      const authUrl = provider.authUrl || "";
 
       // redirect to auth URL
       window.location.href = `${authUrl}${encodeURIComponent(redirectUri)}`;
     }
+  }
+
+  useEffect(() => {
+    // check if the user is already logged in
+    const user = pb.authStore;
+    if (user?.isValid) {
+      router.push("/home");
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full">
+        <Loading />
+      </div>
+    );
   }
 
   return (
@@ -63,13 +71,13 @@ function Home() {
           </div>
           <div className="flex flex-col">
             <div>
-              <a
+              <button
                 type="button"
                 className="flex h-12 w-80 items-center justify-center rounded border border-gray-200 bg-opacity-0 px-3 text-sm font-medium text-subheading outline-none placeholder:text-gray-300 hover:bg-offwhite focus:border-primary"
                 onClick={() => handleLogin("google")}
               >
                 <span className="ml-5">Continue with Google</span>
-              </a>
+              </button>
             </div>
             <div>
               <p className="mt-6 w-full select-none text-center text-xs font-medium text-gray-500">
@@ -123,4 +131,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default Page;
