@@ -108,14 +108,8 @@ function Page() {
   }
 
   if (!userData) {
-    return (
-      <div className="min-h-screen w-full">
-        <Loading />
-      </div>
-    );
+    return <div className="min-h-screen w-full">User data not found</div>;
   }
-
-  console.log(userData);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">
