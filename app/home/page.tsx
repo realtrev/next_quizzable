@@ -69,6 +69,21 @@ function ButtonToStudySet(props: { set: Set; key: string }) {
   );
 }
 
+function CreateStudySet() {
+  const router = useRouter();
+
+  return (
+    <button
+      className="col-span-1 flex h-44 w-96 grow-0 flex-col items-center justify-center rounded-md border border-gray-200 p-4 transition-all duration-300 hover:bg-offwhite hover:shadow"
+      onClick={() => router.push(`/set/create`)}
+    >
+      <h1 className="w-0 min-w-full truncate text-center text-xl font-semibold text-gray-500">
+        Create a new set
+      </h1>
+    </button>
+  );
+}
+
 function Page() {
   const router = useRouter();
   const pb = new PocketBase("https://quizzable.trevord.live");
@@ -111,17 +126,36 @@ function Page() {
     return <div className="min-h-screen w-full">User data not found</div>;
   }
 
+  if (!userData.expand.favoriteSets) {
+    userData.expand.favoriteSets = [];
+  }
+
+  if (!userData.expand.sets) {
+    userData.expand.sets = [];
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">
       <h2 className="text-xl text-gray-600">Welcome, {userData.username}</h2>
-      <div className="m-5 grid grid-cols-2 gap-5">
+      <div className="m-5 grid w-[49.25rem] grid-cols-2 gap-5">
         <h1 className="col-span-2 text-left text-2xl">Favorited Sets</h1>
         {userData.expand.favoriteSets.map((set: Set) => {
           return <ButtonToStudySet set={set} key={set.id} />;
         })}
+        {
+          // if the user has no favorited sets, show a button to create a new set
+          userData.expand.favoriteSets.length === 0 && (
+            <div className="col-span-2 flex h-44 w-full items-center">
+              <h1 className="text-md w-0 min-w-full select-none text-center font-normal text-gray-400">
+                You don't have any favorited sets yet.
+              </h1>
+            </div>
+          )
+        }
       </div>
-      <div className="m-5 grid grid-cols-2 gap-5">
+      <div className="m-5 grid w-[49.25rem] grid-cols-2 gap-5">
         <h1 className="col-span-2 text-left text-2xl">Your Sets</h1>
+        <CreateStudySet />
         {userData.expand.sets.map((set: Set) => {
           return <ButtonToStudySet set={set} key={set.id} />;
         })}
