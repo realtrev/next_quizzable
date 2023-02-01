@@ -1,5 +1,5 @@
 "use client";
-import PocketBase from "pocketbase";
+import PocketBase, { ClientResponseError } from "pocketbase";
 import { useRouter } from "next/navigation";
 import { getAuthData } from "../auth";
 import { useEffect, useState } from "react";
@@ -9,10 +9,33 @@ function Page() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const pb = new PocketBase("https://quizzable.trevord.live");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [usernameMessage, setUsernameMessage] = useState("Email");
+  const [passwordMessage, setPasswordMessage] = useState("Password");
 
   async function handleLogin(type: "email" | "google") {
     // handle email login
     if (type === "email") {
+      try {
+        const authData = await pb
+          .collection("users")
+          .authWithPassword(username, password);
+        console.log(authData);
+        router.push("/home");
+      } catch (error) {
+        //  if the error is ClientResponseError, it means the user is not found
+        if (error instanceof ClientResponseError) {
+          console.error("User not found or invalid arguments");
+
+          // set the error messages
+          setUsernameMessage("Username or password is invalid");
+          setPasswordMessage("Username or password is invalid");
+          return;
+        }
+        // if the database doesnt respond, it means the server is down
+        console.error("Server is down");
+      }
       return;
     }
 
@@ -87,14 +110,15 @@ function Page() {
             <div>
               <label
                 htmlFor="email"
-                className="select-none text-xs font-bold text-subheading"
+                className="select-none text-xs font-bold uppercase text-subheading"
               >
-                EMAIL
+                {usernameMessage}
               </label>
               <input
                 type="email"
                 name="email"
                 id="email"
+                onChange={(e) => setUsername(e.target.value)}
                 autoComplete="email"
                 placeholder="Enter your email or username"
                 className="block h-12 w-80 rounded border border-gray-200 bg-opacity-0 px-3 text-sm font-medium text-subheading outline-none placeholder:text-gray-300 focus:border-primary"
@@ -103,14 +127,15 @@ function Page() {
             <div>
               <label
                 htmlFor="password"
-                className="select-none text-xs font-bold text-subheading"
+                className="select-none text-xs font-bold uppercase text-subheading"
               >
-                PASSWORD
+                {passwordMessage}
               </label>
               <input
                 type="password"
                 name="password"
                 id="password"
+                onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 placeholder="Enter your password"
                 className="block h-12 w-80 rounded border border-gray-200 bg-opacity-0 px-3 text-sm font-medium text-subheading outline-none placeholder:text-gray-300 focus:border-primary"
@@ -119,6 +144,7 @@ function Page() {
             <div>
               <button
                 type="button"
+                onClick={() => handleLogin("email")}
                 className="mt-2 flex h-12 w-80 items-center justify-center rounded bg-primary px-3 text-sm font-medium text-white outline-none transition-all duration-200 placeholder:text-gray-300 hover:brightness-75 focus:border-primary focus:brightness-75"
               >
                 Log in
