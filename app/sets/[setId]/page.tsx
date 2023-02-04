@@ -1,9 +1,12 @@
 "use client";
 import PocketBase from "pocketbase";
-import { useRouter, useSearchParams } from "next/navigation";
-import { getAuthData } from "../../auth";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Loading from "../../loading";
+import Image from "next/image";
+import CardElem from "./cards";
+// import css from flip.css
+import "./flip.css";
 
 type Set = {
   id: string;
@@ -17,9 +20,22 @@ type Set = {
     deflang: string;
     pairs: Array<[string, string]>; // [question, answer]
   };
+  cards: Array<string>;
   expand: {
     author: User;
+    cards: Array<Card>;
   };
+};
+
+type Card = {
+  id: string;
+  term: string;
+  definition: string;
+  created: string;
+  updated: string;
+  set: string;
+  expand: object;
+  image: string;
 };
 
 type User = {
@@ -71,7 +87,7 @@ function Page({ params }: { params: { setId: string } }) {
 
         setSetData(
           await pb.collection("sets").getOne(params.setId, {
-            expand: "author",
+            expand: "author,cards",
           })
         );
 
@@ -86,7 +102,7 @@ function Page({ params }: { params: { setId: string } }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full">
+      <div className="flex min-h-screen w-full">
         <Loading />
       </div>
     );
@@ -100,46 +116,49 @@ function Page({ params }: { params: { setId: string } }) {
     return <div className="min-h-screen w-full">Set data not found</div>;
   }
 
+  window.set = setData;
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center py-20">
-      <div className="flex flex-col items-center justify-center">
-        <div className="flex flex-col items-center justify-center">
-          <h1 className="text-center text-2xl font-bold">
-            {setData?.title || "Set"}
-          </h1>
-          <p className="text-md m-8 mt-3 w-3/4 text-center font-medium">
-            {setData?.description || "Description"}
-          </p>
-          <h1 className="text-center text-xs font-medium text-gray-600">
-            <span className="font-bold text-black">Author: </span>
-            {setData.expand.author.username}
-          </h1>
-          <h1 className="text-center text-xs font-medium text-gray-600">
-            <span className="font-bold text-black">Terms: </span>
-            {setData.content.pairs.length}
-          </h1>
-        </div>
-        <div className="grid grid-cols-2 items-center justify-center gap-2">
-          <h1 className="col-span-1 w-96 text-center text-sm font-bold">
-            Term
-          </h1>
-          <h1 className="col-span-1 w-96 text-center text-sm font-bold">
-            Definition
-          </h1>
-          {setData.content.pairs.map((pair: [string, string], i: number) => (
-            <div
+    <main className="min-h-screen w-full">
+      <div className="flex h-16 w-full items-center justify-center">
+        <button
+          className="my-3 mx-auto text-center"
+          onClick={() => router.push("/home")}
+        >
+          <h1 className="text-4xl text-blue-500">Quizzable</h1>
+        </button>
+      </div>
+      <div className="mx-auto flex max-w-4xl flex-col gap-5 p-10">
+        <h1 className="text-left text-3xl font-bold">{setData.title}</h1>
+        <div className="grid h-12 w-full grid-cols-4 flex-row justify-between gap-2">
+          {[
+            {
+              title: "Flashcards",
+              link: `/sets/${setData.id}/flashcards`,
+            },
+            {
+              title: "Quiz",
+              link: `/sets/${setData.id}/quiz`,
+            },
+            {
+              title: "Edit",
+              link: `/sets/${setData.id}/edit`,
+            },
+            {
+              title: "Delete",
+              link: `/sets/${setData.id}/delete`,
+            },
+          ].map((item: { title: string; link: string }, i: number) => (
+            <button
+              className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
+              onClick={() => router.push(item.link)}
               key={i}
-              className="col-span-2 grid grid-cols-2 items-center justify-center rounded border border-gray-200 p-4 hover:bg-offwhite"
             >
-              <h1 className="col-span-1 w-80 text-left text-lg font-bold">
-                {pair[0]}
-              </h1>
-              <h1 className="col-span-1 w-80 text-left text-lg font-normal text-gray-600">
-                {pair[1]}
-              </h1>
-            </div>
+              <h1>{item.title}</h1>
+            </button>
           ))}
         </div>
+        <CardElem cards={setData.expand.cards} />
       </div>
     </main>
   );

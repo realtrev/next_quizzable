@@ -1,0 +1,28 @@
+card {
+  perspective: 4000px;
+  perspective-origin: 50% 50%;
+}
+
+.front,
+.back {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  transition: transform 0.3s;
+  transition-timing-function: ease-in-out;
+}
+
+.front {
+  transform: rotateX(0deg);
+}
+
+.back {
+  transform: rotateX(180deg);
+}
+
+.frontFlipped {
+  transform: rotateX(180deg);
+}
+
+.backFlipped {
+  transform: rotateX(360deg);
+}
