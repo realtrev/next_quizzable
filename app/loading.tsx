@@ -1,9 +1,7 @@
 function Loading() {
   return (
-    <div>
-      <h1 className="tranform absolute top-1/2 left-1/2 animate-bounce text-2xl text-primary">
-        Quizzable
-      </h1>
+    <div className="flex w-full items-center justify-center">
+      <h1 className="animate-bounce text-4xl text-blue-500">Quizzable</h1>
     </div>
   );
 }

@@ -17,9 +17,22 @@ type Set = {
     deflang: string;
     pairs: Array<[string, string]>; // [question, answer]
   };
+  cards: Array<string>;
   expand: {
     author: User;
+    cards: Array<Card>;
   };
+};
+
+type Card = {
+  id: string;
+  term: string;
+  definition: string;
+  created: string;
+  updated: string;
+  set: string;
+  expand: object;
+  image: string;
 };
 
 type User = {
@@ -45,7 +58,7 @@ function ButtonToStudySet(props: { set: Set; key: string }) {
 
   const { id, title, description } = props.set;
   const author = props.set.expand.author;
-  const termCount = props.set.content.pairs.length;
+  const termCount = props.set.cards.length;
 
   console.log(author);
 
@@ -116,7 +129,7 @@ function Page() {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full">
+      <div className="flex min-h-screen w-full">
         <Loading />
       </div>
     );
@@ -134,8 +147,16 @@ function Page() {
     userData.expand.sets = [];
   }
 
+  window.pocketbase = pb;
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">
+      <button
+        className="my-3 mx-auto text-center"
+        onClick={() => router.push("/home")}
+      >
+        <h1 className="text-4xl text-blue-500">Quizzable</h1>
+      </button>
       <h2 className="text-xl text-gray-600">Welcome, {userData.username}</h2>
       <div className="m-5 grid w-[49.25rem] grid-cols-2 gap-5">
         <h1 className="col-span-2 text-left text-2xl">Favorited Sets</h1>
