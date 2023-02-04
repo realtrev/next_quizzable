@@ -116,8 +116,6 @@ function Page({ params }: { params: { setId: string } }) {
     return <div className="min-h-screen w-full">Set data not found</div>;
   }
 
-  window.set = setData;
-
   return (
     <main className="min-h-screen w-full">
       <div className="flex h-16 w-full items-center justify-center">

@@ -124,7 +124,7 @@ function CardElem(params: { cards: Array<Card> }) {
                   objectFit: "contain",
                   userSelect: "none",
                 }}
-                src={`/api/files/cards/${params.card.id}/${params.card.image}`}
+                src={`/api/files/cards/${card?.id}/${card?.image}`}
                 alt={""}
               />
             </div>
