@@ -42,7 +42,10 @@ yarn-error.log*
 *.tsbuildinfo
 
 # pocketbase
-/pb_data
+*/**/pb_data/*
+*/**/errors.log
+*/**/go.sum
+*/**/pocketbase_old
 
 # vscode
 .vscode
