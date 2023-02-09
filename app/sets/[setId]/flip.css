@@ -1,5 +1,5 @@
-card {
-  perspective: 4000px;
+#card {
+  perspective: 3000px;
   perspective-origin: 50% 50%;
 }
 
@@ -7,7 +7,7 @@ card {
 .back {
   backface-visibility: hidden;
   transform-style: preserve-3d;
-  transition: transform 0.3s;
+  transition: transform 0.4s;
   transition-timing-function: ease-in-out;
 }
 
@@ -19,10 +19,10 @@ card {
   transform: rotateX(180deg);
 }
 
-.frontFlipped {
+.front-flipped {
   transform: rotateX(180deg);
 }
 
-.backFlipped {
+.back-flipped {
   transform: rotateX(360deg);
 }
