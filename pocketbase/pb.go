@@ -57,7 +57,7 @@ func main() {
 	// Allowed values are "public" and "private" and "unlisted"
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		e.Router.AddRoute(echo.Route{
-			Method: http.MethodGet,
+			Method: http.MethodPut,
 			Path:   "/api/quizzable/sets/:setId/visibility",
 			Handler: func(c echo.Context) error {
 				record, err := app.Dao().FindRecordById("sets", c.PathParam("setId"))
