@@ -54,11 +54,11 @@ function CardElem(params: { cards: Array<Card> }) {
     // flip card
     const front = document.getElementById("frontCard");
     if (front) {
-      front.classList.toggle("frontFlipped");
+      front.classList.toggle("front-flipped");
     }
     const back = document.getElementById("backCard");
     if (back) {
-      back.classList.toggle("backFlipped");
+      back.classList.toggle("back-flipped");
     }
   };
 
@@ -71,17 +71,17 @@ function CardElem(params: { cards: Array<Card> }) {
     const front = document.getElementById("frontCard");
     if (front) {
       if (showAnswer) {
-        front.classList.remove("frontFlipped");
+        front.classList.remove("front-flipped");
       } else {
-        front.classList.add("frontFlipped");
+        front.classList.add("front-flipped");
       }
     }
     const back = document.getElementById("backCard");
     if (back) {
       if (showAnswer) {
-        back.classList.remove("backFlipped");
+        back.classList.remove("back-flipped");
       } else {
-        back.classList.add("backFlipped");
+        back.classList.add("back-flipped");
       }
     }
   };
@@ -93,18 +93,17 @@ function CardElem(params: { cards: Array<Card> }) {
   }, [currentCard]);
 
   if (params.cards.length === 0 || !card) {
-    <div
-      id="backCard"
-      className="back absolute top-0 z-0 h-full w-full rounded-md border border-gray-300 bg-offwhite"
-    >
-      <div className="flex h-full w-full flex-col items-center justify-center gap-5 p-10">
-        <h1 className="text-4xl font-normal">No cards found</h1>
+    return (
+      <div className="back absolute top-0 z-0 h-full w-full rounded-md border border-gray-300 bg-offwhite">
+        <div className="flex h-full w-full flex-col items-center justify-center gap-5 p-10">
+          <h1 className="text-4xl font-normal">No cards found</h1>
+        </div>
       </div>
-    </div>;
+    );
   }
 
   return (
-    <div className="card relative h-[32rem]" onClick={flipCard}>
+    <div className="card relative h-[32rem]" onClick={flipCard} id="card">
       <div
         id="frontCard"
         className="front absolute top-0 z-10 flex h-full w-full flex-col gap-5 rounded-md border border-gray-300 bg-offwhite p-10"
