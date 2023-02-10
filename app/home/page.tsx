@@ -88,7 +88,7 @@ function CreateStudySet() {
   return (
     <button
       className="col-span-1 flex h-44 w-96 grow-0 flex-col items-center justify-center rounded-md border border-gray-200 p-4 transition-all duration-300 hover:bg-offwhite hover:shadow"
-      onClick={() => router.push(`/set/create`)}
+      onClick={() => router.push(`/sets/create`)}
     >
       <h1 className="w-0 min-w-full truncate text-center text-xl font-semibold text-gray-500">
         Create a new set
@@ -129,7 +129,7 @@ function Page() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full items-center justify-center">
         <Loading />
       </div>
     );
