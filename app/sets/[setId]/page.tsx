@@ -102,7 +102,7 @@ function Page({ params }: { params: { setId: string } }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full items-center justify-center">
         <Loading />
       </div>
     );
@@ -118,15 +118,15 @@ function Page({ params }: { params: { setId: string } }) {
 
   return (
     <main className="min-h-screen w-full">
-      <div className="flex h-16 w-full items-center justify-center">
+      <section className="flex h-16 w-full items-center justify-center">
         <button
           className="my-3 mx-auto text-center"
           onClick={() => router.push("/home")}
         >
           <h1 className="text-4xl text-blue-500">Quizzable</h1>
         </button>
-      </div>
-      <div className="mx-auto flex max-w-4xl flex-col gap-5 p-10">
+      </section>
+      <section className="mx-auto flex max-w-4xl flex-col gap-5 p-10">
         <h1 className="text-left text-3xl font-bold">{setData.title}</h1>
         <div className="grid h-12 w-full grid-cols-4 flex-row justify-between gap-2">
           {[
@@ -157,7 +157,7 @@ function Page({ params }: { params: { setId: string } }) {
           ))}
         </div>
         <CardElem cards={setData.expand.cards} />
-      </div>
+      </section>
     </main>
   );
 }
