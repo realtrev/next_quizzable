@@ -47,6 +47,15 @@ const config = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/sets",
+        destination: "/home",
+        permanent: true,
+      },
+    ];
+  },
   // Access-Control-Allow-Origin: *
   async headers() {
     return [
