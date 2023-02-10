@@ -13,11 +13,16 @@ h6 {
 }
 
 p {
-  font-family: "Open Sans", sans-serif;
-  font-weight: 500;
+  font-family: "Outfit", sans-serif;
+  font-weight: 400;
 }
 
 input {
-  font-family: "Open Sans", sans-serif;
+  font-family: "Outfit", sans-serif;
   font-weight: 500;
+}
+
+textarea {
+  font-family: "Outfit", sans-serif;
+  font-weight: 400;
 }
