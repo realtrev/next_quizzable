@@ -5,53 +5,7 @@ import { getAuthData } from "../auth";
 import { useEffect, useState } from "react";
 import Loading from "../loading";
 
-type Set = {
-  id: string;
-  title: string;
-  description: string;
-  created: string;
-  updated: string;
-  author: string;
-  content: {
-    termlang: string;
-    deflang: string;
-    pairs: Array<[string, string]>; // [question, answer]
-  };
-  cards: Array<string>;
-  expand: {
-    author: User;
-    cards: Array<Card>;
-  };
-};
-
-type Card = {
-  id: string;
-  term: string;
-  definition: string;
-  created: string;
-  updated: string;
-  set: string;
-  expand: object;
-  image: string;
-};
-
-type User = {
-  avatar: string;
-  collectionId: string;
-  collectionName: string;
-  created: string;
-  email: string;
-  emailVisibility: boolean;
-  expand: {
-    favoriteSets: Array<Set>;
-    sets: Array<Set>;
-  };
-  id: string;
-  name: string;
-  updated: string;
-  username: string;
-  verified: boolean;
-};
+import type { User, Set } from "../types";
 
 function ButtonToStudySet(props: { set: Set; key: string }) {
   const router = useRouter();
