@@ -3,14 +3,14 @@ package main
 import (
 	"fmt"
 	"log"
-    "net/http"
+	"net/http"
 
-    "github.com/labstack/echo/v5"
-    "github.com/pocketbase/pocketbase"
-    "github.com/pocketbase/pocketbase/apis"
+	goaway "github.com/TwiN/go-away"
+	"github.com/labstack/echo/v5"
+	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/models"
-	"github.com/TwiN/go-away"
 
 	"encoding/json"
 	"io/ioutil"
@@ -182,18 +182,11 @@ func main() {
 					})
 				}
 
-				// Get the "author" key data from the map
-				title, ok := bodyMap["author"].(string)
-				if !ok {
-					return c.JSON(http.StatusBadRequest, map[string]interface{}{
-						"code": http.StatusBadRequest,
-						"message": "The author value is invalid.",
-						"data": map[string]interface{}{},
-					})
-				}
+				// User data from auth record
+				authRecord, _ := c.Get(apis.ContextAuthRecordKey).(*models.Record)
 
 				// Get the "title" key data from the map
-				title, ok = bodyMap["title"].(string)
+				title, ok := bodyMap["title"].(string)
 				if !ok {
 					title = ""
 				}
@@ -252,6 +245,7 @@ func main() {
 				record.Set("title", title)
 				record.Set("description", description)
 				record.Set("visibility", visibility)
+				record.Set("author", authRecord.Id)
 
 				// Get the author from the request context
 				author, ok := c.Get(apis.ContextAuthRecordKey).(*models.Record)
@@ -289,7 +283,9 @@ func main() {
 		return nil
 	})
 
-	// new PUT route at /api/quizzable/sets/:setId that updates the set with the given ID
+	// new PUT route at /api/quizzable/sets/:setId that updates the set with the provided data
+	// Data will contain { title, description, visibility, author, cards }
+	// When updating the set, the cards must be looped through and updated individually, as well as checked for profanity
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		e.Router.AddRoute(echo.Route{
 			Method: http.MethodPut,
@@ -298,7 +294,7 @@ func main() {
 				// Check if the user can edit the set
 				authData := c.Get(apis.ContextAuthRecordKey).(*models.Record)
 
-				// Get the set from the database
+				// Find the set with the given ID
 				set, err := app.Dao().FindRecordById("sets", c.PathParam("setId"))
 				if err != nil {
 					return c.JSON(http.StatusNotFound, map[string]interface{}{
@@ -308,16 +304,16 @@ func main() {
 					})
 				}
 
-				// Check if the user can edit the set
+				// Check if the user is the author of the set
 				if set.Get("author").(string) != authData.Id {
 					return c.JSON(http.StatusForbidden, map[string]interface{}{
 						"code": http.StatusForbidden,
-						"message": "You do not have permission to edit this set.",
+						"message": "You are not the author of this set.",
 						"data": map[string]interface{}{},
 					})
 				}
 
-				// Get the request body
+				// Get the body data
 				body, err := ioutil.ReadAll(c.Request().Body)
 				if err != nil {
 					return c.JSON(http.StatusBadRequest, map[string]interface{}{
@@ -327,7 +323,7 @@ func main() {
 					})
 				}
 
-				// Unmarshal the request body into the map
+				// Unmarshal the body data
 				bodyMap := map[string]interface{}{}
 				if err := json.Unmarshal(body, &bodyMap); err != nil {
 					return c.JSON(http.StatusBadRequest, map[string]interface{}{
@@ -337,8 +333,16 @@ func main() {
 					})
 				}
 
-				// Check if the title is valid, and not profane
-				title := bodyMap["title"].(string)
+				// Check if the title is valid
+				title, ok := bodyMap["title"].(string)
+				if !ok {
+					return c.JSON(http.StatusBadRequest, map[string]interface{}{
+						"code": http.StatusBadRequest,
+						"message": "The title is invalid.",
+						"data": map[string]interface{}{},
+					})
+				}
+
 				if goaway.IsProfane(title) {
 					return c.JSON(http.StatusBadRequest, map[string]interface{}{
 						"code": http.StatusBadRequest,
@@ -347,8 +351,16 @@ func main() {
 					})
 				}
 
-				// Check if the description is valid, and not profane
-				description := bodyMap["description"].(string)
+				// Check if the description is valid
+				description, ok := bodyMap["description"].(string)
+				if !ok {
+					return c.JSON(http.StatusBadRequest, map[string]interface{}{
+						"code": http.StatusBadRequest,
+						"message": "The description is invalid.",
+						"data": map[string]interface{}{},
+					})
+				}
+
 				if goaway.IsProfane(description) {
 					return c.JSON(http.StatusBadRequest, map[string]interface{}{
 						"code": http.StatusBadRequest,
@@ -359,7 +371,7 @@ func main() {
 
 				// Check if the visibility is valid
 				visibility, ok := bodyMap["visibility"].(string)
-				if ok && visibility != "public" && visibility != "private" {
+				if !ok {
 					return c.JSON(http.StatusBadRequest, map[string]interface{}{
 						"code": http.StatusBadRequest,
 						"message": "The visibility is invalid.",
@@ -367,20 +379,189 @@ func main() {
 					})
 				}
 
-				if !ok {
-					visibility = "public"
+				if visibility != "public" && visibility != "private" && visibility != "unlisted" {
+					return c.JSON(http.StatusBadRequest, map[string]interface{}{
+						"code": http.StatusBadRequest,
+						"message": "The visibility is invalid. It must be either public, private, or unlisted.",
+						"data": map[string]interface{}{},
+					})
 				}
 
-				// Update the set
+				// Loop over each card in expand.cards and check if it is valid. If the card has no ID, create a new card and add it to the set's cards array
+				// Create new map from expand object of bodyMap, which is currently marshalled as a string
+				expand, ok := bodyMap["expand"].(map[string]interface{})
+				if !ok {
+					return c.JSON(http.StatusBadRequest, map[string]interface{}{
+						"code": http.StatusBadRequest,
+						"message": "The request body is invalid. Invalid expand data.",
+						"data": map[string]interface{}{},
+					})
+				}
+
+
+				// Create a list of card from the marshalled string of expand.cards
+				cards, ok := expand["cards"].([]interface{})
+
+				// Reset the cards array
+				set.Set("cards", []string{})
+
+				cardIds := []string{}
+
+				// Loop over each card in expand.cards and check if it is valid. If the card has no ID, create a new card and add it to the set's cards array
+				for _, card := range cards {
+					// Check if the term is valid
+					cardData, ok := card.(map[string]interface{})
+					if !ok {
+						return c.JSON(http.StatusBadRequest, map[string]interface{}{
+							"code": http.StatusBadRequest,
+							"message": "The request body is invalid. Invalid card data.",
+							"data": map[string]interface{}{},
+						})
+					}
+
+					// Check that the "set" field is valid, which must be the same as the ID of the set
+					cardSetId, ok := cardData["set"].(string)
+					if !ok {
+						return c.JSON(http.StatusBadRequest, map[string]interface{}{
+							"code": http.StatusBadRequest,
+							"message": "The request body is invalid. Invalid card data, a child card of this set does not have a valid set field.",
+							"data": map[string]interface{}{},
+						})
+					}
+
+					// If the set Id is not the same as the set's ID, and its not unset (meaning its a new card), return an error
+					if cardSetId != set.Get("id").(string) && cardSetId != "" {
+						return c.JSON(http.StatusBadRequest, map[string]interface{}{
+							"code": http.StatusBadRequest,
+							"message": "The request body is invalid. Invalid card data, a child card of this set does not have a valid parent set field.",
+							"data": map[string]interface{}{},
+						})
+					}
+
+					// Check the term and definition for profanity
+					// Term
+					term, ok := cardData["term"].(string)
+					if !ok {
+						return c.JSON(http.StatusBadRequest, map[string]interface{}{
+							"code": http.StatusBadRequest,
+							"message": "The request body is invalid. Invalid card data.",
+							"data": map[string]interface{}{},
+						})
+					}
+
+					if goaway.IsProfane(term) {
+						return c.JSON(http.StatusBadRequest, map[string]interface{}{
+							"code": http.StatusBadRequest,
+							"message": "The request body is invalid. A card term contains profanity, for card with term " + term + ".",
+							"data": map[string]interface{}{},
+						})
+					}
+
+					// Definition
+					definition, ok := cardData["definition"].(string)
+					if !ok {
+						return c.JSON(http.StatusBadRequest, map[string]interface{}{
+							"code": http.StatusBadRequest,
+							"message": "The request body is invalid. Invalid card data for card with term " + term + ".",
+							"data": map[string]interface{}{},
+						})
+					}
+
+					if goaway.IsProfane(definition) {
+						return c.JSON(http.StatusBadRequest, map[string]interface{}{
+							"code": http.StatusBadRequest,
+							"message": "The request body is invalid. A card definition contains profanity, for card with definition " + definition + ".",
+							"data": map[string]interface{}{},
+						})
+					}
+
+					// If the card has no ID (empty string), create a new card and add it to the set's cards array
+					// Otherwise, update the card with the new data
+					cardId, ok := cardData["id"].(string)
+					if !ok {
+						return c.JSON(http.StatusBadRequest, map[string]interface{}{
+							"code": http.StatusBadRequest,
+							"message": "The request body is invalid. Invalid card data. for card with term " + term + " and definition " + definition + ".",
+							"data": map[string]interface{}{},
+						})
+					}
+
+					if cardId == "" {
+
+						cardCollection, err := app.Dao().FindCollectionByNameOrId("cards")
+						if err != nil {
+							return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+								"code": http.StatusInternalServerError,
+								"message": "An internal server error occurred. Could not find card collection.",
+								"data": map[string]interface{}{},
+							})
+						}
+
+						record := models.NewRecord(cardCollection)
+						record.Set("term", term)
+						record.Set("definition", definition)
+						record.Set("set", set.Get("id").(string))
+
+						// Save the card
+						if err := app.Dao().SaveRecord(record); err != nil {
+							return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+								"code": http.StatusInternalServerError,
+								"message": "An internal server error occurred. Could not create card with term " + term + " and definition " + definition + ".",
+								"data": map[string]interface{}{},
+							})
+						}
+
+						// Add the card's ID to the set's cards array
+						cardIds = append(cardIds, record.Get("id").(string))
+
+						fmt.Println("Created new card with ID " + record.Get("id").(string))
+						fmt.Println("Term: " + term)
+						fmt.Println("Definition: " + definition)
+						fmt.Println("Set: " + set.Get("id").(string))
+					} else {
+						record, err := app.Dao().FindRecordById("cards", cardId)
+						if err != nil {
+							return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+								"code": http.StatusInternalServerError,
+								"message": "An internal server error occurred. Could not find card with ID " + cardId,
+								"data": map[string]interface{}{},
+							})
+						}
+
+						record.Set("term", term)
+						record.Set("definition", definition)
+						record.Set("set", set.Get("id").(string))
+
+						// Update the card
+						if err := app.Dao().SaveRecord(record); err != nil {
+							return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+								"code": http.StatusInternalServerError,
+								"message": "An internal server error occurred. Could not update card with ID " + cardId,
+								"data": map[string]interface{}{},
+							})
+						}
+
+						// Add the card's ID to the set's cards array
+						cardIds = append(cardIds, record.Get("id").(string))
+
+						fmt.Println("Updated card with ID " + record.Get("id").(string))
+						fmt.Println("Term: " + term)
+						fmt.Println("Definition: " + definition)
+						fmt.Println("Set: " + set.Get("id").(string))
+					}
+					fmt.Println(cardIds)
+				}
+				fmt.Println("Done with cards")
+
 				set.Set("title", title)
 				set.Set("description", description)
-				set.Set("visibility", visibility)
+				set.Set("cards", cardIds)
 
 				// Save the set
 				if err := app.Dao().SaveRecord(set); err != nil {
 					return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 						"code": http.StatusInternalServerError,
-						"message": "An error occurred while trying to update the set.",
+						"message": "An internal server error occurred. Could not save set with ID " + set.Get("id").(string),
 						"data": map[string]interface{}{},
 					})
 				}
@@ -388,7 +569,7 @@ func main() {
 				// Return the set
 				return c.JSON(http.StatusOK, map[string]interface{}{
 					"code": http.StatusOK,
-					"message": "The set was updated successfully.",
+					"message": "Successfully updated set with ID " + set.Get("id").(string),
 					"data": set,
 				})
 			},

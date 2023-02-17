@@ -12,21 +12,23 @@ function Page({ params }: { params: { setId: string } }) {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null as User | null);
 
-  let cardData = new Array(3).fill({}).map(() => ({
-    term: "",
-    definition: "",
-    id: "",
-    setId: "",
-    created: "",
-    updated: "",
-    set: "",
-    expand: {},
-    image: "",
-    isEdited: true,
-    isDeleted: false,
-  })) as EditedCard[];
+  const [cardData, setCardData] = useState(
+    new Array(3).fill({}).map(() => ({
+      term: "",
+      definition: "",
+      id: "",
+      setId: "",
+      created: "",
+      updated: "",
+      set: "",
+      expand: {},
+      image: "",
+      isEdited: true,
+      isDeleted: false,
+    })) as EditedCard[]
+  );
 
-  let set = {
+  const [set, setSet] = useState({
     id: "",
     title: "",
     description: "",
@@ -36,15 +38,14 @@ function Page({ params }: { params: { setId: string } }) {
     author: "",
     expand: {
       author: {} as User,
-      cards: cardData,
+      cards: [] as EditedCard[],
     },
     cards: [],
     isEdited: true,
     isDeleted: false,
-  } as EditedSet;
+  } as EditedSet);
 
   useEffect(() => {
-
     console.log(params.setId);
 
     const func = async function () {
@@ -87,10 +88,15 @@ function Page({ params }: { params: { setId: string } }) {
     const index = cardData.findIndex((c) => c.id === card.id);
     if (index === -1) {
       console.error("Card not found");
-      return;
+      return undefined;
     }
-    cardData[index][field] = event.target.value;
-    cardData[index].isEdited = true;
+    setCardData(
+      cardData.map((cardInMap, i) =>
+        i === index
+          ? { ...cardInMap, [field]: event.target?.value, isEdited: true }
+          : cardInMap
+      )
+    );
     return cardData[index] as EditedCard;
   }
 
@@ -101,7 +107,13 @@ function Page({ params }: { params: { setId: string } }) {
       console.error("Card not found");
       return;
     }
-    cardData[index].isDeleted = true;
+    setCardData(
+      cardData.map((cardInMap, i) =>
+        i === index
+          ? { ...cardInMap, isDeleted: true, isEdited: true }
+          : cardInMap
+      )
+    );
   }
 
   if (loading) {
@@ -116,8 +128,47 @@ function Page({ params }: { params: { setId: string } }) {
     return <div className="min-h-screen w-full">User data not found</div>;
   }
 
-      window.set = set;
-    window.pb = pb;
+  async function saveSet(setId: string = set.id) {
+    // PUT is for updating, POST is for creating
+    const method = setId !== "" ? "PUT" : "POST";
+
+    // send the request
+    const response: { message: string; data: EditedSet; status: number } =
+      (await pb
+        .send("/api/quizzable/sets/" + setId, {
+          method: method,
+          body: {
+            ...set,
+            expand: {
+              ...set.expand,
+              cards: cardData,
+            },
+          },
+        })
+        .catch((err) => {
+          return err as { message: string; data: EditedSet; status: number };
+        })) as { message: string; data: EditedSet; status: number };
+
+    // if the request failed, return
+    // get the new set from the response
+    const newSet = response.data;
+    console.log(newSet);
+    // set get the data of the set
+    const newSetData: EditedSet = await pb
+      .collection("sets")
+      .getOne(newSet.id, {
+        expand: "cards",
+      });
+    newSetData.isEdited = false;
+    console.log(newSetData);
+    setCardData(
+      (newSetData?.expand?.cards as EditedCard[]) ?? ([] as EditedCard[])
+    );
+    setSet({
+      ...set,
+      ...newSetData,
+    });
+  }
 
   return (
     <div className="min-h-screen w-full">
@@ -142,8 +193,8 @@ function Page({ params }: { params: { setId: string } }) {
               <CardElement
                 editCard={editCard}
                 deleteCard={deleteCard}
-                saveSet={(autoSave?: boolean) => {
-                  console.log("Save");
+                saveSet={async (autoSave?: boolean) => {
+                  await saveSet();
                 }}
                 key={i}
                 card={card}
@@ -151,8 +202,18 @@ function Page({ params }: { params: { setId: string } }) {
             ))}
             <button
               className="col-span-2 flex h-16 items-center justify-center rounded-md bg-gray-100 transition-all duration-200 hover:bg-gray-200 hover:shadow-md"
-              onClick={() => {
-                console.log("Create card");
+              onClick={async () => {
+                setCardData([
+                  ...cardData,
+                  {
+                    id: "",
+                    term: "",
+                    definition: "",
+                    image: "",
+                    isEdited: true,
+                  } as EditedCard,
+                ]);
+                await saveSet();
               }}
             >
               <h1 className="font-normal">Create Card</h1>
@@ -166,12 +227,14 @@ function Page({ params }: { params: { setId: string } }) {
               type="text"
               placeholder="Give your set a title!"
               onChange={(e) => editSet(e, "title")}
+              onBlur={() => saveSet()}
             />
 
             <textarea
               className="block h-[7.5rem] w-full resize-none appearance-none rounded-md border border-gray-300 bg-gray-100 py-2 px-4 leading-normal outline-none hover:border-gray-400 focus:border-blue-500 focus:bg-gray-200"
               placeholder="Enter a description..."
               onChange={(e) => editSet(e, "description")}
+              onBlur={() => saveSet()}
             />
 
             <div className="grid h-10 grid-cols-2 gap-3">
