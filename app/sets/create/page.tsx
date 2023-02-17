@@ -207,8 +207,7 @@ function Page({ params }: { params: { setId: string } }) {
             ))}
             <button
               className="col-span-2 flex h-16 items-center justify-center rounded-md bg-gray-100 transition-all duration-200 hover:bg-gray-200 hover:shadow-md"
-              onClick={async () => {
-                await saveSet();
+              onClick={() => {
                 setCardData([
                   ...cardData,
                   {
@@ -216,7 +215,7 @@ function Page({ params }: { params: { setId: string } }) {
                     term: "",
                     definition: "",
                     image: "",
-                    set: set.id,
+                    set: "",
                     isEdited: true,
                   } as EditedCard,
                 ]);
