@@ -149,6 +149,11 @@ function Page({ params }: { params: { setId: string } }) {
           return err as { message: string; data: EditedSet; status: number };
         })) as { message: string; data: EditedSet; status: number };
 
+    if (response.code !== 200) {
+      console.error(response);
+      return;
+    }
+
     // if the request failed, return
     // get the new set from the response
     const newSet = response.data;
