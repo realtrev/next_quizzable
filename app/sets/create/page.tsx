@@ -133,7 +133,7 @@ function Page({ params }: { params: { setId: string } }) {
     const method = setId !== "" ? "PUT" : "POST";
 
     // send the request
-    const response: { message: string; data: EditedSet; status: number } =
+    const response: { message: string; data: EditedSet; code: number } =
       (await pb
         .send("/api/quizzable/sets/" + setId, {
           method: method,
@@ -146,8 +146,8 @@ function Page({ params }: { params: { setId: string } }) {
           },
         })
         .catch((err) => {
-          return err as { message: string; data: EditedSet; status: number };
-        })) as { message: string; data: EditedSet; status: number };
+          return err as { message: string; data: EditedSet; code: number };
+        })) as { message: string; data: EditedSet; code: number };
 
     if (response.code !== 200) {
       console.error(response);
@@ -208,6 +208,7 @@ function Page({ params }: { params: { setId: string } }) {
             <button
               className="col-span-2 flex h-16 items-center justify-center rounded-md bg-gray-100 transition-all duration-200 hover:bg-gray-200 hover:shadow-md"
               onClick={async () => {
+                await saveSet();
                 setCardData([
                   ...cardData,
                   {
@@ -215,10 +216,11 @@ function Page({ params }: { params: { setId: string } }) {
                     term: "",
                     definition: "",
                     image: "",
+                    set: set.id,
                     isEdited: true,
                   } as EditedCard,
                 ]);
-                await saveSet();
+                console.log(cardData);
               }}
             >
               <h1 className="font-normal">Create Card</h1>
