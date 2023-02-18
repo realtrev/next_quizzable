@@ -11,6 +11,8 @@ function Page({ params }: { params: { setId: string } }) {
   const pb = new PocketBase("https://quizzable.trevord.live");
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null as User | null);
+  const [lastSave, setLastSave] = useState(-1 as number);
+  const [saving, setSaving] = useState(false as boolean);
 
   const [cardData, setCardData] = useState(
     new Array(3).fill({}).map(() => ({
@@ -33,6 +35,7 @@ function Page({ params }: { params: { setId: string } }) {
     title: "",
     description: "",
     visibility: "public",
+    published: false,
     created: "",
     updated: "",
     author: "",
@@ -101,19 +104,27 @@ function Page({ params }: { params: { setId: string } }) {
   }
 
   function deleteCard(card: EditedCard) {
+    console.log("DELETING CARD", card);
     // find the card in the array
+    let newCardData = cardData;
     const index = cardData.findIndex((c) => c.id === card.id);
     if (index === -1) {
       console.error("Card not found");
       return;
     }
-    setCardData(
-      cardData.map((cardInMap, i) =>
-        i === index
-          ? { ...cardInMap, isDeleted: true, isEdited: true }
-          : cardInMap
-      )
+
+    newCardData = newCardData.map((cardInMap, i) =>
+      i === index
+        ? { ...cardInMap, isDeleted: true, isEdited: true }
+        : cardInMap
     );
+    // If the card as an id of "" then it has never been saved and can be removed from the array
+    if (card.id === "") {
+      // delete the card at the index from the array
+      newCardData = newCardData.filter((_, i) => i !== index);
+    }
+    setCardData(newCardData);
+    saveSet(set.id, newCardData).catch(console.error);
   }
 
   if (loading) {
@@ -128,9 +139,22 @@ function Page({ params }: { params: { setId: string } }) {
     return <div className="min-h-screen w-full">User data not found</div>;
   }
 
-  async function saveSet(setId: string = set.id) {
+  window.cards = cardData;
+
+  async function saveSet(
+    setId: string = set.id,
+    newCardData: EditedCard[] = cardData
+  ) {
     // PUT is for updating, POST is for creating
     const method = setId !== "" ? "PUT" : "POST";
+
+    console.log("SAVING", {
+      ...set,
+      expand: {
+        ...set.expand,
+        cards: newCardData,
+      },
+    });
 
     // send the request
     const response: { message: string; data: EditedSet; code: number } =
@@ -141,7 +165,7 @@ function Page({ params }: { params: { setId: string } }) {
             ...set,
             expand: {
               ...set.expand,
-              cards: cardData,
+              cards: newCardData,
             },
           },
         })
@@ -166,6 +190,14 @@ function Page({ params }: { params: { setId: string } }) {
       });
     newSetData.isEdited = false;
     console.log(newSetData);
+    if (newSetData?.expand?.cards) {
+      // Add the isdeleted and isedited fields to the cards
+      newSetData.expand.cards = newSetData.expand.cards.map((card) => ({
+        ...card,
+        isDeleted: false,
+        isEdited: false,
+      }));
+    }
     setCardData(
       (newSetData?.expand?.cards as EditedCard[]) ?? ([] as EditedCard[])
     );
@@ -173,6 +205,8 @@ function Page({ params }: { params: { setId: string } }) {
       ...set,
       ...newSetData,
     });
+    window.cards =
+      (newSetData?.expand?.cards as EditedCard[]) ?? ([] as EditedCard[]);
   }
 
   return (
@@ -217,6 +251,7 @@ function Page({ params }: { params: { setId: string } }) {
                     image: "",
                     set: "",
                     isEdited: true,
+                    isDeleted: false,
                   } as EditedCard,
                 ]);
                 console.log(cardData);
@@ -277,8 +312,10 @@ function CardElement(props: {
         type="text"
         placeholder="Enter a term..."
         onChange={(e) => {
+          card.term = e.target.value;
           card = props.editCard(e, card, "term");
         }}
+        value={card.term}
         onBlur={() => {
           props.saveSet(true);
         }}
@@ -289,8 +326,10 @@ function CardElement(props: {
           type="text"
           placeholder="Enter a definition..."
           onChange={(e) => {
+            card.definition = e.target.value;
             card = props.editCard(e, card, "definition");
           }}
+          value={card.definition}
           onBlur={() => {
             card.isEdited = true;
             props.saveSet(true);
