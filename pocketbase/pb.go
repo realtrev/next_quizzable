@@ -177,12 +177,6 @@ func main() {
 					})
 				}
 
-				// If the user does not have the set in their "sets" array, add the id
-				if contains(authData.Get("sets").([]string), set.Get("id").(string)) == false {
-					authData.Set("sets", append(authData.Get("sets").([]interface{}), set.Get("id")))
-					fmt.Println("Added the new set to the user's authored sets in their account.")
-				}
-
 				// Loop over each card in expand.cards and check if it is valid. If the card has no ID, create a new card and add it to the set's cards array
 				// Create new map from expand object of bodyMap, which is currently marshalled as a string
 				expand, ok := bodyMap["expand"].(map[string]interface{})
@@ -358,6 +352,33 @@ func main() {
 					return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 						"code": http.StatusInternalServerError,
 						"message": "An internal server error occurred. Could not save set with ID " + set.Get("id").(string),
+						"data": map[string]interface{}{},
+					})
+				}
+
+				// Get the user record from the database
+				fmt.Println(set.Get("id"))
+
+				user, err := app.Dao().FindRecordById("users", authData.Id)
+				if err != nil {
+					return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+						"code": http.StatusInternalServerError,
+						"message": "An error occurred while trying to get the specified content.",
+						"data": map[string]interface{}{},
+					})
+				}
+
+				// Add the set id to the user's sets array
+				fmt.Println("set id", set.Get("id"))
+
+				// Add the set id to the user's sets array
+				user.Set("sets", append(user.Get("sets").([]string), set.Get("id").(string)))
+
+				// Save the user record
+				if err := app.Dao().SaveRecord(user); err != nil {
+					return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+						"code": http.StatusInternalServerError,
+						"message": "An error occurred while trying to get the specified content.",
 						"data": map[string]interface{}{},
 					})
 				}
