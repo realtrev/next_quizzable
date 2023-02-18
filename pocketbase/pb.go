@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	goaway "github.com/TwiN/go-away"
 	"github.com/labstack/echo/v5"
@@ -16,6 +17,19 @@ import (
 	"io/ioutil"
 )
 
+// UTILS
+
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+
+	return false
+}
+
+// MAIN
 func main() {
 	app := pocketbase.New()
 
@@ -198,6 +212,12 @@ func main() {
 						"message": "The request body is invalid.",
 						"data": map[string]interface{}{},
 					})
+				}
+
+				// Set published to the value of the "published" key in the body data
+				published, ok := bodyMap["published"].(bool)
+				if ok {
+					set.Set("published", published)
 				}
 
 				// Check if the title is valid
@@ -499,6 +519,7 @@ func main() {
 					})
 				}
 
+
 				// Check if the title is valid
 				title, ok := bodyMap["title"].(string)
 				if !ok {
@@ -545,6 +566,31 @@ func main() {
 					})
 				}
 
+				// Set published to the value of the "published" key in the body data
+				// If the set is published, it cannot be unpublished
+				published, ok := bodyMap["published"].(bool)
+				if !ok {
+					return c.JSON(http.StatusBadRequest, map[string]interface{}{
+						"code": http.StatusBadRequest,
+						"message": "The published value is invalid.",
+						"data": map[string]interface{}{},
+					})
+				}
+
+				if published && !set.Get("published").(bool) {
+					// Check if the title length is greater than 0
+					if len(title) == 0 {
+						return c.JSON(http.StatusBadRequest, map[string]interface{}{
+							"code": http.StatusBadRequest,
+							"message": "Cannot publish a set with an empty title.",
+							"data": map[string]interface{}{},
+						})
+					}
+
+					// If the set is valid to be published, set the published value to true
+					set.Set("published", true)
+				}
+
 				if visibility != "public" && visibility != "private" && visibility != "unlisted" {
 					return c.JSON(http.StatusBadRequest, map[string]interface{}{
 						"code": http.StatusBadRequest,
@@ -574,8 +620,8 @@ func main() {
 				cardIds := []string{}
 
 				// Loop over each card in expand.cards and check if it is valid. If the card has no ID, create a new card and add it to the set's cards array
-				for _, card := range cards {
-					// Check if the term is valid
+				for i, card := range cards {
+					// Get the card data
 					cardData, ok := card.(map[string]interface{})
 					if !ok {
 						return c.JSON(http.StatusBadRequest, map[string]interface{}{
@@ -593,6 +639,51 @@ func main() {
 							"message": "The request body is invalid. Invalid card data, a child card of this set does not have a valid set field.",
 							"data": map[string]interface{}{},
 						})
+					}
+
+					// If the card has no ID (empty string), create a new card and add it to the set's cards array
+					// Otherwise, update the card with the new data
+					cardId, ok := cardData["id"].(string)
+					if !ok {
+						return c.JSON(http.StatusBadRequest, map[string]interface{}{
+							"code": http.StatusBadRequest,
+							"message": "The request body is invalid. Invalid card ID for card " + strconv.Itoa(i) + ".",
+							"data": map[string]interface{}{},
+						})
+					}
+
+					// If the card is already added to the cardIds array, skip it
+					if contains(cardIds, cardId) {
+						continue
+					}
+
+					// Check if the user is deleting the card. "isDeleted" is a custom field that is not part of the card schema
+					isDeleted, ok := cardData["isDeleted"].(bool)
+					if !ok {
+						return c.JSON(http.StatusBadRequest, map[string]interface{}{
+							"code": http.StatusBadRequest,
+							"message": "The request body is invalid. Invalid card data, a child card of this set does not have a valid isDeleted field.",
+							"data": map[string]interface{}{},
+						})
+					}
+
+					// If the card is deleted, skip it
+					if isDeleted {
+						// Get from the database and delete it
+						card, err := app.Dao().FindRecordById("cards", cardId)
+						if err != nil {
+							return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+								"code": http.StatusInternalServerError,
+								"message": "An error occurred while deleting a card with ID " + cardId + ".",
+								"data": map[string]interface{}{},
+							})
+						}
+
+						// Delete the card
+						err = app.Dao().DeleteRecord(card)
+						// End this loop iteration, because we don't want to add this card to the set's cards array
+						fmt.Println("Deleted card with ID " + cardId)
+						continue
 					}
 
 					// If the set Id is not the same as the set's ID, and its not unset (meaning its a new card), return an error
@@ -637,17 +728,6 @@ func main() {
 						return c.JSON(http.StatusBadRequest, map[string]interface{}{
 							"code": http.StatusBadRequest,
 							"message": "The request body is invalid. A card definition contains profanity, for card with definition " + definition + ".",
-							"data": map[string]interface{}{},
-						})
-					}
-
-					// If the card has no ID (empty string), create a new card and add it to the set's cards array
-					// Otherwise, update the card with the new data
-					cardId, ok := cardData["id"].(string)
-					if !ok {
-						return c.JSON(http.StatusBadRequest, map[string]interface{}{
-							"code": http.StatusBadRequest,
-							"message": "The request body is invalid. Invalid card data. for card with term " + term + " and definition " + definition + ".",
 							"data": map[string]interface{}{},
 						})
 					}
