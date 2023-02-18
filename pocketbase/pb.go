@@ -68,103 +68,6 @@ func main() {
 		return nil
 	})
 
-	// Create a new route at /api/sets/:set/visibility that updates the visibility of a set.
-	// Allowed values are "public" and "private" and "unlisted"
-	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
-		e.Router.AddRoute(echo.Route{
-			Method: http.MethodPut,
-			Path:   "/api/quizzable/sets/:setId/visibility",
-			Handler: func(c echo.Context) error {
-				record, err := app.Dao().FindRecordById("sets", c.PathParam("setId"))
-				if err != nil {
-					return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-						"code": http.StatusInternalServerError,
-						"message": "An error occurred while trying to get the specified content.",
-						"data": map[string]interface{}{},
-					})
-				}
-
-				if record == nil {
-					return c.JSON(http.StatusNotFound, map[string]interface{}{
-						"code": http.StatusNotFound,
-						"message": "The specified content was not found.",
-						"data": map[string]interface{}{},
-					})
-				}
-
-				// check if the user is allowed to update the record
-				authRecord, _ := c.Get(apis.ContextAuthRecordKey).(*models.Record)
-				// if the user is not authenticated or the user is not the owner of the record, return 401 Unauthorized
-				// if the authRecord.Id is equal to the author key of the record, then the user is allowed to update the record
-				fmt.Println(authRecord)
-				fmt.Println(record)
-				if authRecord == nil || authRecord.Get("id") != record.Get("author") {
-					return c.JSON(http.StatusUnauthorized, map[string]interface{}{
-						"code": http.StatusUnauthorized,
-						"message": "You are not allowed to perform this request.",
-						"data": map[string]interface{}{},
-					})
-				}
-
-				// Create a map to store the request body data
-				bodyMap := map[string]interface{}{}
-
-				// Read the request body
-				b, err := ioutil.ReadAll(c.Request().Body)
-				if err != nil {
-					return c.JSON(http.StatusBadRequest, map[string]interface{}{
-						"code": http.StatusBadRequest,
-						"message": "The request body is invalid.",
-						"data": map[string]interface{}{},
-					})
-				}
-
-				// Unmarshal the request body into the map
-				if err := json.Unmarshal(b, &bodyMap); err != nil {
-					return c.JSON(http.StatusBadRequest, map[string]interface{}{
-						"code": http.StatusBadRequest,
-						"message": "The request body is invalid.",
-						"data": map[string]interface{}{},
-					})
-				}
-
-				// Get the "visibility" key data from the map
-				visibility, ok := bodyMap["visibility"].(string)
-				if !ok || (visibility != "public" && visibility != "private" && visibility != "unlisted") {
-					return c.JSON(http.StatusBadRequest, map[string]interface{}{
-						"code": http.StatusBadRequest,
-						"message": "The visibility value is invalid. Allowed values are \"public\", \"private\" and \"unlisted\".",
-						"data": map[string]interface{}{},
-					})
-				}
-
-				// Update the visibility of the record
-				record.Set("visibility", visibility)
-
-				// Save the record
-				if err := app.Dao().SaveRecord(record); err != nil {
-					return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-						"code": http.StatusInternalServerError,
-						"message": "An error occurred while trying to update the visibility of the specified set.",
-						"data": map[string]interface{}{},
-					})
-				}
-
-				return c.JSON(http.StatusOK, map[string]interface{}{
-					"code": http.StatusOK,
-					"message": "The visibility of the specified set was updated successfully.",
-					"data": record,
-				})
-			},
-			Middlewares: []echo.MiddlewareFunc{
-				apis.ActivityLogger(app),
-				apis.RequireAdminOrRecordAuth(),
-			},
-		})
-
-		return nil
-	})
-
 	// new POST route at /api/quizzable/sets/ that creates a new set. check if the title or description contains profanity using goaway.isProfane("string")
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		e.Router.AddRoute(echo.Route{
@@ -817,6 +720,61 @@ func main() {
 					"code": http.StatusOK,
 					"message": "Successfully updated set with ID " + set.Get("id").(string),
 					"data": set,
+				})
+			},
+			Middlewares: []echo.MiddlewareFunc{
+				apis.ActivityLogger(app),
+				apis.RequireAdminOrRecordAuth(),
+			},
+		})
+
+		return nil
+	})
+
+	// new DELETE /api/quizzable/sets/:id
+	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
+		e.Router.AddRoute(echo.Route{
+			Method: "DELETE",
+			Path: "/api/quizzable/sets/:setId",
+			Handler: func(c echo.Context) error {
+				// Get the set ID
+				setId := c.PathParam("setId")
+
+				// Find the set
+				set, err := app.Dao().FindRecordById("sets", setId)
+				if err != nil {
+					return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+						"code": http.StatusInternalServerError,
+						"message": "An internal server error occurred. Could not find set with ID " + setId,
+						"data": map[string]interface{}{},
+					})
+				}
+
+				// Make sure the user is authorized to delete the set
+				authData := c.Get(apis.ContextAuthRecordKey).(*models.Record)
+
+				if authData.Id != set.Get("owner").(string) {
+					return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+						"code": http.StatusUnauthorized,
+						"message": "You are not authorized to delete this set.",
+						"data": map[string]interface{}{},
+					})
+				}
+
+				// Delete the set
+				if err := app.Dao().DeleteRecord(set); err != nil {
+					return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+						"code": http.StatusInternalServerError,
+						"message": "An internal server error occurred. Could not delete set with ID " + setId,
+						"data": map[string]interface{}{},
+					})
+				}
+
+				// Return the set
+				return c.JSON(http.StatusOK, map[string]interface{}{
+					"code": http.StatusOK,
+					"message": "Successfully deleted set with ID " + setId,
+					"data": map[string]interface{}{},
 				})
 			},
 			Middlewares: []echo.MiddlewareFunc{
