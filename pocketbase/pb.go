@@ -274,6 +274,12 @@ func main() {
 					})
 				}
 
+				// If the user does not have the set in their "sets" array, add the id
+				if contains(authData.Get("sets").([]string), set.Get("id").(string)) == false {
+					authData.Set("sets", append(authData.Get("sets").([]interface{}), set.Get("id")))
+					fmt.Println("Added the new set to the user's authored sets in their account.")
+				}
+
 				// Loop over each card in expand.cards and check if it is valid. If the card has no ID, create a new card and add it to the set's cards array
 				// Create new map from expand object of bodyMap, which is currently marshalled as a string
 				expand, ok := bodyMap["expand"].(map[string]interface{})
