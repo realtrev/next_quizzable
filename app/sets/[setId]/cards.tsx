@@ -41,16 +41,22 @@ function CardElem(params: { cards: Array<Card> }) {
   };
 
   useEffect(() => {
-    if (params.cards.length > 0 && currentCard < params.cards.length) {
+    if (
+      params.cards &&
+      params.cards.length > 0 &&
+      currentCard < params.cards.length
+    ) {
       setCard(params.cards[currentCard]);
     }
   }, [currentCard]);
 
-  if (params.cards.length === 0 || !card) {
+  if (!card || !params.cards || params.cards.length === 0) {
     return (
-      <div className="back absolute top-0 z-0 h-full w-full rounded-md border border-gray-300 bg-offwhite">
-        <div className="flex h-full w-full flex-col items-center justify-center gap-5 p-10">
-          <h1 className="text-4xl font-normal">No cards found</h1>
+      <div className="card relative h-[32rem]" id="card">
+        <div className="front absolute top-0 z-10 flex flex h-full w-full flex-col items-center justify-center gap-5 rounded-md border border-gray-300 bg-offwhite p-10">
+          <h1 className="text-4xl font-bold text-gray-400">
+            Cannot find cards
+          </h1>
         </div>
       </div>
     );
