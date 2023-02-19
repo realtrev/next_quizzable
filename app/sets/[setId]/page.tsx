@@ -8,14 +8,15 @@ import CardElem from "./cards";
 // import css from flip.css
 import "./flip.css";
 
-import type { User, Set } from "../../types";
+import type { User, Set, EditedSet } from "../../types";
 
 function Page({ params }: { params: { setId: string } }) {
   const router = useRouter();
   const pb = new PocketBase("https://quizzable.trevord.live");
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null as User | null);
-  const [setData, setSetData] = useState(null as Set | null);
+  const [setData, setSetData] = useState(null as EditedSet | null);
+  const [isAuthor, setIsAuthor] = useState(false);
 
   useEffect(() => {
     console.log(params.setId);
@@ -24,31 +25,45 @@ function Page({ params }: { params: { setId: string } }) {
       // check if the user is already logged in
       const user = pb.authStore;
       if (!user.isValid) {
+        // If not logged in, redirect to login page
         router.push("/login");
       } else {
-        setLoading(false);
+        //
         console.log(user.model);
         const id = user.model?.id;
         if (!id) {
           console.error("No user id found");
           return;
         }
-        setUserData(
-          await pb.collection("users").getOne(user.model?.id, {
+
+        const newUserData: User = await pb
+          .collection("users")
+          .getOne(user.model?.id, {
             expand: "favoriteSets,favoriteSets.author,sets,sets.author",
-          })
-        );
+          });
 
-        setSetData(
-          await pb.collection("sets").getOne(params.setId, {
+        setUserData(newUserData);
+
+        const response: EditedSet = await pb
+          .collection("sets")
+          .getOne(params.setId, {
             expand: "author,cards",
-          })
-        );
+          });
 
-        if (!setData) {
+        if (!response) {
           console.error("Set not found");
           return;
         }
+
+        setSetData(response);
+
+        console.log(response.id);
+
+        if (newUserData && response.author === newUserData.id) {
+          setIsAuthor(true);
+          console.log("User is set author");
+        }
+        setLoading(false);
       }
     };
     func().catch(console.error);
@@ -82,7 +97,7 @@ function Page({ params }: { params: { setId: string } }) {
       </section>
       <section className="mx-auto flex max-w-4xl flex-col gap-5 p-10">
         <h1 className="text-left text-3xl font-bold">{setData.title}</h1>
-        <div className="grid h-12 w-full grid-cols-4 flex-row justify-between gap-2">
+        <div className="grid hidden h-12 w-full grid-cols-5 flex-row justify-between gap-2">
           {[
             {
               title: "Flashcards",
@@ -93,12 +108,16 @@ function Page({ params }: { params: { setId: string } }) {
               link: `/sets/${setData.id}/quiz`,
             },
             {
-              title: "Edit",
-              link: `/sets/${setData.id}/edit`,
+              title: "Match",
+              link: `/sets/${setData.id}/match`,
             },
             {
-              title: "Delete",
-              link: `/sets/${setData.id}/delete`,
+              title: "Arcade",
+              link: `/sets/${setData.id}/game`,
+            },
+            {
+              title: "Endless",
+              link: `/sets/${setData.id}/game`,
             },
           ].map((item: { title: string; link: string }, i: number) => (
             <button
@@ -111,6 +130,56 @@ function Page({ params }: { params: { setId: string } }) {
           ))}
         </div>
         <CardElem cards={setData.expand.cards} />
+      </section>
+      <section className="mx-auto flex max-w-4xl justify-between gap-4 p-10">
+        <div className="flex gap-5">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary"></div>
+          <div className="flex flex-col justify-center">
+            <h1 className="m-0 p-0 text-left text-xs font-normal text-gray-500">
+              Created by
+            </h1>
+            <h1 className="m-0 p-0 text-left text-xl font-medium" id="author">
+              {setData.expand.author.username}
+            </h1>
+          </div>
+        </div>
+        <div className="ml-auto flex gap-4">
+          <button
+            className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
+            onClick={() =>
+              router.push(`/sets/${setData.expand.author.id}/edit`)
+            }
+          >
+            <h1>Add to Favorites</h1>
+          </button>
+          <button
+            className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
+            onClick={() => console.log("share")}
+          >
+            <h1>Share</h1>
+          </button>
+          <button
+            className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
+            onClick={() => router.push(`/sets/${setData.id}/edit`)}
+          >
+            <h1>Edit</h1>
+          </button>
+        </div>
+      </section>
+      <section className="mx-auto flex max-w-4xl flex-col gap-5 p-10">
+        {setData?.expand?.cards?.map((card, i) => {
+          return (
+            <div
+              key={i}
+              className="grid w-full grid-cols-2 gap-5 rounded border border-gray-300 bg-offwhite p-5"
+            >
+              <h1 className="col-span-1">{card.term}</h1>
+              <h1 className="col-span-1 font-normal text-gray-600">
+                {card.definition}
+              </h1>
+            </div>
+          );
+        })}
       </section>
     </main>
   );

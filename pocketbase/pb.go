@@ -590,11 +590,7 @@ func main() {
 					// Check if the user is deleting the card. "isDeleted" is a custom field that is not part of the card schema
 					isDeleted, ok := cardData["isDeleted"].(bool)
 					if !ok {
-						return c.JSON(http.StatusBadRequest, map[string]interface{}{
-							"code": http.StatusBadRequest,
-							"message": "The request body is invalid. Invalid card data, a child card of this set does not have a valid isDeleted field.",
-							"data": map[string]interface{}{},
-						})
+						isDeleted = false
 					}
 
 					// If the card is deleted, skip it
