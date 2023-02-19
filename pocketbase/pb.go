@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 
 // UTILS
 
+// Check if a string is in a slice.
 func contains(s []string, str string) bool {
 	for _, v := range s {
 		if v == str {
@@ -29,9 +31,39 @@ func contains(s []string, str string) bool {
 	return false
 }
 
+// Find the index of a string in a slice.
+func indexOf(s []string, str string) (int, error) {
+	for i, v := range s {
+		if v == str {
+			return i, nil
+		}
+	}
+
+	return -1, errors.New("string not found")
+}
+
+// Remove the element at index i from a slice.
+func remove(s []string, i int) []string {
+	s[len(s)-1], s[i] = s[i], s[len(s)-1]
+	return s[:len(s)-1]
+}
+
 // MAIN
 func main() {
 	app := pocketbase.New()
+
+	// Add access control allow origin header to all responses only for "https://quizzable.trevord.live"
+	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
+		e.Router.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+			return func(c echo.Context) error {
+				// Global headers
+				c.Response().Header().Set("Access-Control-Allow-Origin", "https://quizzable.trevord.live")
+				return next(c)
+			}
+		})
+
+		return nil
+	})
 
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		e.Router.AddRoute(echo.Route{
@@ -776,12 +808,41 @@ func main() {
 				// Make sure the user is authorized to delete the set
 				authData := c.Get(apis.ContextAuthRecordKey).(*models.Record)
 
-				if authData.Id != set.Get("owner").(string) {
+				if authData.Id != set.Get("author").(string) {
 					return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 						"code": http.StatusUnauthorized,
 						"message": "You are not authorized to delete this set.",
 						"data": map[string]interface{}{},
 					})
+				}
+
+				// Loop through the set's cards and delete them
+				cards := set.Get("cards").([]string)
+
+				fmt.Println("Deleting cards")
+
+				for _, cardId := range cards {
+
+					// Find the card
+					cardRecord, err := app.Dao().FindRecordById("cards", cardId)
+					if err != nil {
+						return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+							"code": http.StatusInternalServerError,
+							"message": "An internal server error occurred. Could not find card with ID " + cardId,
+							"data": map[string]interface{}{},
+						})
+					}
+
+					// Delete the card
+					if err := app.Dao().DeleteRecord(cardRecord); err != nil {
+						return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+							"code": http.StatusInternalServerError,
+							"message": "An internal server error occurred. Could not delete card with ID " + cardId,
+							"data": map[string]interface{}{},
+						})
+					}
+
+					fmt.Println("Deleted card with ID " + cardId)
 				}
 
 				// Delete the set
@@ -793,11 +854,104 @@ func main() {
 					})
 				}
 
+				fmt.Println("Deleted set with ID " + setId)
+
 				// Return the set
 				return c.JSON(http.StatusOK, map[string]interface{}{
 					"code": http.StatusOK,
 					"message": "Successfully deleted set with ID " + setId,
 					"data": map[string]interface{}{},
+				})
+			},
+			Middlewares: []echo.MiddlewareFunc{
+				apis.ActivityLogger(app),
+				apis.RequireAdminOrRecordAuth(),
+			},
+		})
+
+		return nil
+	})
+
+	// new PUT /api/quizzable/favorite/:setId, that toggles the favorite status of a set for the current user
+	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
+		e.Router.AddRoute(echo.Route{
+			Method: "PUT",
+			Path: "/api/quizzable/favorite/:setId",
+			Handler: func(c echo.Context) error {
+				// Get the set ID
+				setId := c.PathParam("setId")
+
+				// Find the set
+				set, err := app.Dao().FindRecordById("sets", setId)
+				if err != nil {
+					return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+						"code": http.StatusInternalServerError,
+						"message": "An internal server error occurred. Could not find set with ID " + setId,
+						"data": map[string]interface{}{},
+					})
+				}
+				setId = set.Get("id").(string)
+
+				// Get the user's ID
+				authData := c.Get(apis.ContextAuthRecordKey).(*models.Record)
+				userId := authData.Id
+
+				// Action: favorited/unfavorited
+				favorited := false
+
+				// Find the user
+				user, err := app.Dao().FindRecordById("users", userId)
+				if err != nil {
+					return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+						"code": http.StatusInternalServerError,
+						"message": "An internal server error occurred. Could not find user with ID " + userId,
+						"data": map[string]interface{}{},
+					})
+				}
+
+				// Get the user's favorite sets
+				favorites := user.Get("favoriteSets").([]string)
+				// Add the set id to the favorites, and remove it if it's already there
+				// Check if the set is already in the favorites, using the contains helper function
+				if contains(favorites, setId) {
+					// Remove the set from the favorites
+					index, err := indexOf(favorites, setId)
+					if err != nil {
+						return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+							"code": http.StatusInternalServerError,
+							"message": "An internal server error occurred. Could not find set with ID " + setId + " in favorites.",
+							"data": map[string]interface{}{},
+						})
+					}
+
+					favorites = remove(favorites, index)
+					favorited = false
+				} else {
+					// Add the set to the favorites
+					favorites = append(favorites, setId)
+					favorited = true
+				}
+
+				// Update the user's favorite sets
+				user.Set("favoriteSets", favorites)
+
+				// Save the user
+				if err := app.Dao().SaveRecord(user); err != nil {
+					return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+						"code": http.StatusInternalServerError,
+						"message": "An internal server error occurred. Could not save user with ID " + userId,
+						"data": map[string]interface{}{},
+					})
+				}
+
+				// Return the user
+				return c.JSON(http.StatusOK, map[string]interface{}{
+					"code": http.StatusOK,
+					"message": "Successfully updated user with ID " + userId,
+					"data": map[string]interface{}{
+						"set": set,
+						"favorited": favorited,
+					},
 				})
 			},
 			Middlewares: []echo.MiddlewareFunc{
