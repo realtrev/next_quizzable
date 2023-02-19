@@ -37,6 +37,8 @@ type User = {
   };
   id: string;
   name: string;
+  sets: Array<string>;
+  favoriteSets: Array<string>;
   updated: string;
   username: string;
   verified: boolean;

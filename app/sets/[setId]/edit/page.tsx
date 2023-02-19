@@ -152,6 +152,19 @@ function Page({ params }: { params: { setId: string } }) {
     saveSet(set.id, newCardData).catch(console.error);
   }
 
+  //   when set data is changed, update the title and description
+  useEffect(() => {
+    if (set?.title) {
+      document.getElementById("title").value = set.title;
+    }
+    if (set?.description) {
+      document.getElementById("description").value = set.description;
+    }
+    if (set?.visibility) {
+      // pass
+    }
+  }, [set]);
+
   if (loading) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center">
@@ -230,8 +243,6 @@ function Page({ params }: { params: { setId: string } }) {
       ...set,
       ...newSetData,
     });
-    window.cards =
-      (newSetData?.expand?.cards as EditedCard[]) ?? ([] as EditedCard[]);
   }
 
   return (
@@ -292,14 +303,14 @@ function Page({ params }: { params: { setId: string } }) {
               className="block h-10 w-full appearance-none rounded-md border border-gray-300 bg-gray-100 px-4 leading-normal outline-none hover:border-gray-400 focus:border-blue-500 focus:bg-gray-200"
               type="text"
               placeholder="Give your set a title!"
-              value={set.title}
+              id="title"
               onChange={(e) => editSet(e, "title")}
             />
 
             <textarea
               className="block h-[7.5rem] w-full resize-none appearance-none rounded-md border border-gray-300 bg-gray-100 py-2 px-4 leading-normal outline-none hover:border-gray-400 focus:border-blue-500 focus:bg-gray-200"
               placeholder="Enter a description..."
-              value={set.description}
+              id="description"
               onChange={(e) => editSet(e, "description")}
             />
 

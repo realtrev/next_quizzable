@@ -17,57 +17,118 @@ function Page({ params }: { params: { setId: string } }) {
   const [userData, setUserData] = useState(null as User | null);
   const [setData, setSetData] = useState(null as EditedSet | null);
   const [isAuthor, setIsAuthor] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
     console.log(params.setId);
 
     const func = async function () {
+      const response: EditedSet = await pb
+        .collection("sets")
+        .getOne(params.setId, {
+          expand: "author,cards",
+        });
+
+      if (!response) {
+        console.error("Set not found");
+        return;
+      }
+
+      console.log(response);
+      setSetData(response);
+
       // check if the user is already logged in
       const user = pb.authStore;
-      if (!user.isValid) {
-        // If not logged in, redirect to login page
-        router.push("/login");
-      } else {
-        //
+      if (user.isValid && user.model) {
         console.log(user.model);
         const id = user.model?.id;
         if (!id) {
           console.error("No user id found");
-          return;
+          // return;
         }
 
         const newUserData: User = await pb
           .collection("users")
-          .getOne(user.model?.id, {
+          .getOne(user.model.id, {
             expand: "favoriteSets,favoriteSets.author,sets,sets.author",
           });
 
         setUserData(newUserData);
 
-        const response: EditedSet = await pb
-          .collection("sets")
-          .getOne(params.setId, {
-            expand: "author,cards",
-          });
-
-        if (!response) {
-          console.error("Set not found");
-          return;
-        }
-
-        setSetData(response);
-
-        console.log(response.id);
-
         if (newUserData && response.author === newUserData.id) {
           setIsAuthor(true);
           console.log("User is set author");
         }
-        setLoading(false);
+
+        // Check if the set is favorited, by whether the set id is in the user's favoriteSets array
+        if (newUserData.favoriteSets) {
+          if (newUserData.favoriteSets.some((set) => set === response.id)) {
+            setIsFavorited(true);
+          }
+        }
       }
+      setLoading(false);
     };
     func().catch(console.error);
   }, []);
+
+  async function toggleFavorite() {
+    if (!userData) {
+      console.error("No user data found");
+      return;
+    }
+
+    if (!setData) {
+      console.error("No set data found");
+      return;
+    }
+
+    // toggle the favorite state
+    const response = (await pb
+      .send(`/api/quizzable/favorite/${setData.id}`, {
+        method: "PUT",
+      })
+      .catch(console.error)) as {
+      code: number;
+      data: { set: string; favorited: boolean };
+      message: string;
+    };
+
+    if (response) {
+      setIsFavorited(response.data.favorited);
+    }
+
+    return response.data.favorited;
+  }
+
+  async function deleteSet() {
+    console.log("Deleting set");
+    if (!userData) {
+      console.error("No user data found");
+      return;
+    }
+
+    if (!setData) {
+      console.error("No set data found");
+      return;
+    }
+
+    // delete the set
+
+    const response = (await pb
+      .send(`/api/quizzable/sets/${setData.id}`, {
+        method: "DELETE",
+      })
+      .catch(console.error)) as {
+      code: number;
+      data: object;
+      message: string;
+    };
+
+    if (response) {
+      router.push("/home");
+    }
+  }
 
   if (loading) {
     return (
@@ -75,10 +136,6 @@ function Page({ params }: { params: { setId: string } }) {
         <Loading />
       </div>
     );
-  }
-
-  if (!userData) {
-    return <div className="min-h-screen w-full">User data not found</div>;
   }
 
   if (!setData) {
@@ -113,7 +170,7 @@ function Page({ params }: { params: { setId: string } }) {
             },
             {
               title: "Arcade",
-              link: `/sets/${setData.id}/game`,
+              link: `/sets/${setData.id}/arcade`,
             },
             {
               title: "Endless",
@@ -133,7 +190,7 @@ function Page({ params }: { params: { setId: string } }) {
       </section>
       <section className="mx-auto flex max-w-4xl justify-between gap-4 p-10">
         <div className="flex gap-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary"></div>
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500"></div>
           <div className="flex flex-col justify-center">
             <h1 className="m-0 p-0 text-left text-xs font-normal text-gray-500">
               Created by
@@ -144,26 +201,47 @@ function Page({ params }: { params: { setId: string } }) {
           </div>
         </div>
         <div className="ml-auto flex gap-4">
-          <button
-            className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
-            onClick={() =>
-              router.push(`/sets/${setData.expand.author.id}/edit`)
-            }
-          >
-            <h1>Add to Favorites</h1>
-          </button>
+          {userData ? (
+            <button
+              className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
+              onClick={() => {
+                toggleFavorite().catch(console.error);
+              }}
+            >
+              <h1>
+                {isFavorited ? "Remove from Favorites" : "Add to Favorites"}
+              </h1>
+            </button>
+          ) : (
+            <button
+              className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
+              onClick={() => router.push(`/login?redirect=/sets/${setData.id}`)}
+            >
+              <h1>Login to favorite</h1>
+            </button>
+          )}
           <button
             className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
             onClick={() => console.log("share")}
           >
             <h1>Share</h1>
           </button>
-          <button
-            className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
-            onClick={() => router.push(`/sets/${setData.id}/edit`)}
-          >
-            <h1>Edit</h1>
-          </button>
+          {isAuthor ? (
+            <button
+              className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
+              onClick={() => router.push(`/sets/${setData.id}/edit`)}
+            >
+              <h1>Edit</h1>
+            </button>
+          ) : null}
+          {isAuthor ? (
+            <button
+              className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
+              onClick={() => deleteSet().catch(console.error)}
+            >
+              <h1>Delete</h1>
+            </button>
+          ) : null}
         </div>
       </section>
       <section className="mx-auto flex max-w-4xl flex-col gap-5 p-10">
