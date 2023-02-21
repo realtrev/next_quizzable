@@ -2,10 +2,13 @@
 import PocketBase from "pocketbase";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getAuthData } from "../../../auth";
+import { useState } from "react";
+import Loading from "../../../loading";
 
 function Page() {
   const params = useSearchParams();
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
   function connect() {
     const code = params.get("code");
@@ -43,7 +46,6 @@ function Page() {
           if (!content) {
             throw "Failed to get content element";
           }
-          content.innerText = "Authenticated";
           router.push("/home");
         })
         .catch((err: string) => {
@@ -51,7 +53,6 @@ function Page() {
           if (!content) {
             throw "Failed to get content element";
           }
-          content.innerText = `Failed to exchange code.\n ${err}`;
         });
     } catch (err) {
       console.error(err);
@@ -59,12 +60,23 @@ function Page() {
       if (!content) {
         throw "Failed to get content element";
       }
-      content.innerText = `Failed to parse provider.`;
       console.error(err);
     }
   }
 
-  connect();
+  try {
+    connect();
+  } catch (err) {
+    console.error(err);
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center">
+        <Loading />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white">

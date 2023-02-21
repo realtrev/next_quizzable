@@ -151,7 +151,7 @@ func main() {
 
 				// Set published to the value of the "published" key in the body data
 				published, ok := bodyMap["published"].(bool)
-				if ok {
+				if ok  && published {
 					set.Set("published", published)
 				}
 
@@ -500,6 +500,10 @@ func main() {
 					})
 				}
 
+				if title == "" {
+					title = "(draft)"
+				}
+
 				// Check if the description is valid
 				description, ok := bodyMap["description"].(string)
 				if !ok {
@@ -537,20 +541,6 @@ func main() {
 						"message": "The published value is invalid.",
 						"data": map[string]interface{}{},
 					})
-				}
-
-				if published && !set.Get("published").(bool) {
-					// Check if the title length is greater than 0
-					if len(title) == 0 {
-						return c.JSON(http.StatusBadRequest, map[string]interface{}{
-							"code": http.StatusBadRequest,
-							"message": "Cannot publish a set with an empty title.",
-							"data": map[string]interface{}{},
-						})
-					}
-
-					// If the set is valid to be published, set the published value to true
-					set.Set("published", true)
 				}
 
 				if visibility != "public" && visibility != "private" && visibility != "unlisted" {
@@ -760,6 +750,29 @@ func main() {
 				set.Set("title", title)
 				set.Set("description", description)
 				set.Set("cards", cardIds)
+
+				if published && !set.Get("published").(bool) {
+					// Check if the title length is greater than 0
+					if len(title) == 0 {
+						return c.JSON(http.StatusBadRequest, map[string]interface{}{
+							"code": http.StatusBadRequest,
+							"message": "Cannot publish a set with an empty title.",
+							"data": map[string]interface{}{},
+						})
+					}
+
+					// If the set has no cards, return an error
+					if len(cardIds) == 0 {
+						return c.JSON(http.StatusBadRequest, map[string]interface{}{
+							"code": http.StatusBadRequest,
+							"message": "Cannot publish a set with no cards.",
+							"data": map[string]interface{}{},
+						})
+					}
+
+					// If the set is valid to be published, set the published value to true
+					set.Set("published", true)
+				}
 
 				// Save the set
 				if err := app.Dao().SaveRecord(set); err != nil {

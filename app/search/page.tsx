@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Loading from "../loading";
 
 import type { User, Set } from "../types";
+import Navbar from "../navbar";
 
 function ButtonToStudySet(props: { set: Set }, key: number) {
   const router = useRouter();
@@ -111,7 +112,6 @@ function Page() {
         return;
       }
 
-      setSearchQuery(query ?? "");
       setSearchType(type);
 
       await handleSearch(query, type, pageNumber);
@@ -126,6 +126,7 @@ function Page() {
     type: "sets" | "users",
     page: number
   ) {
+    console.log("searching for", query);
     if (type === "sets") {
       const sets = (await pb.collection("sets").getList(page, resultsPerPage, {
         expand: "author",
@@ -135,6 +136,7 @@ function Page() {
 
       setSearchType("sets");
       setSearchResults(sets);
+      setSearchQuery(query);
       return sets;
     }
 
@@ -146,6 +148,7 @@ function Page() {
 
       setSearchType("users");
       setSearchResults(users);
+      setSearchQuery(query);
       return users;
     }
   }
@@ -160,12 +163,12 @@ function Page() {
 
   return (
     <main className="flex min-h-screen flex-col items-center">
-      <button
-        className="my-3 mx-auto text-center"
-        onClick={() => router.push("/home")}
-      >
-        <h1 className="text-4xl text-blue-500">Quizzable</h1>
-      </button>
+      <Navbar
+        user={userData ?? undefined}
+        searchDefault={searchQuery}
+        onSearch={handleSearch}
+      />
+
       <div className="m-5 grid w-[49.25rem] grid-cols-2 gap-5">
         <h1 className="col-span-2 text-left text-2xl">
           Search for {searchQuery}
@@ -175,6 +178,11 @@ function Page() {
             return <ButtonToStudySet set={result as Set} key={result.id} />;
           }
         })}
+        {searchResults?.items.length === 0 ? (
+          <h1 className="col-span-2 flex h-36 items-center justify-center text-center text-4xl text-gray-300 select-none">
+            No results found
+          </h1>
+        ) : null}
       </div>
     </main>
   );

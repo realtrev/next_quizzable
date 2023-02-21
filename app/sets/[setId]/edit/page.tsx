@@ -5,6 +5,7 @@ import { ChangeEvent, useEffect, useState } from "react";
 import Loading from "../../../loading";
 
 import type { User, EditedSet, EditedCard } from "../../../types";
+import Navbar from "../../../navbar";
 
 function Page({ params }: { params: { setId: string } }) {
   const router = useRouter();
@@ -91,7 +92,7 @@ function Page({ params }: { params: { setId: string } }) {
         }
 
         setSet(response);
-        setCardData(response?.expand?.cards);
+        setCardData(response?.expand?.cards ?? []);
 
         setLoading(false);
       }
@@ -100,10 +101,10 @@ function Page({ params }: { params: { setId: string } }) {
   }, []);
 
   function editSet(
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    field: "title" | "description" | "visibility"
+    value: string | boolean,
+    field: "title" | "description" | "visibility" | "published"
   ) {
-    set[field] = event.target?.value;
+    set[field] = value;
     set.isEdited = true;
   }
 
@@ -213,7 +214,7 @@ function Page({ params }: { params: { setId: string } }) {
 
     if (response.code !== 200) {
       console.error(response);
-      return;
+      return response;
     }
 
     // if the request failed, return
@@ -243,18 +244,14 @@ function Page({ params }: { params: { setId: string } }) {
       ...set,
       ...newSetData,
     });
+
+    return response;
   }
 
   return (
     <div className="min-h-screen w-full">
-      <section className="flex h-16 w-full items-center justify-center">
-        <button
-          className="my-3 mx-auto text-center"
-          onClick={() => router.push("/home")}
-        >
-          <h1 className="text-4xl text-blue-500">Quizzable</h1>
-        </button>
-      </section>
+      <Navbar user={userData} />
+
       <section className="mx-auto flex max-w-6xl gap-5 p-10">
         <main className="grow">
           <div className="grid grid-cols-2 gap-5">
@@ -264,7 +261,7 @@ function Page({ params }: { params: { setId: string } }) {
             <label className="col-span-1 flex h-10 items-center justify-center rounded-md bg-gray-100">
               <h1 className="font-normal">Definition</h1>
             </label>
-            {cardData.map((card: EditedCard, i: number) => (
+            {cardData?.map((card: EditedCard, i: number) => (
               <CardElement
                 editCard={editCard}
                 deleteCard={deleteCard}
@@ -279,7 +276,7 @@ function Page({ params }: { params: { setId: string } }) {
               className="col-span-2 flex h-16 items-center justify-center rounded-md bg-gray-100 transition-all duration-200 hover:bg-gray-200 hover:shadow-md"
               onClick={() => {
                 setCardData([
-                  ...cardData,
+                  ...(cardData ?? []),
                   {
                     id: "",
                     term: "",
@@ -304,34 +301,65 @@ function Page({ params }: { params: { setId: string } }) {
               type="text"
               placeholder="Give your set a title!"
               id="title"
-              onChange={(e) => editSet(e, "title")}
+              onChange={(e) => editSet(e.target.value, "title")}
             />
 
             <textarea
               className="block h-[7.5rem] w-full resize-none appearance-none rounded-md border border-gray-300 bg-gray-100 py-2 px-4 leading-normal outline-none hover:border-gray-400 focus:border-blue-500 focus:bg-gray-200"
               placeholder="Enter a description..."
               id="description"
-              onChange={(e) => editSet(e, "description")}
+              onChange={(e) => editSet(e.target.value, "description")}
             />
 
-            <div className="grid h-10 grid-cols-2 gap-3">
+            <div
+              className={
+                "grid h-10 gap-3 " +
+                (set.published ? "grid-cols-2" : "grid-cols-3")
+              }
+            >
               <button
                 className="col-span-1 h-full rounded-md bg-gray-400 px-4 font-bold text-white transition-all duration-200 hover:bg-gray-600"
                 onClick={() => {
-                  router.push(`/sets/${set.id}`);
+                  if (set.published) {
+                    router.push(`/sets/${set.id}`);
+                  } else {
+                    router.push("/home");
+                  }
                 }}
               >
                 <h1>Cancel</h1>
               </button>
               <button
                 className="col-span-1 h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
-                onClick={async () => {
-                  await saveSet();
-                  router.push(`/sets/${set.id}`);
+                onClick={() => {
+                  setTimeout(async () => {
+                    const res = await saveSet(set.id, cardData);
+                    if (res?.code !== 200) {
+                      console.error(res);
+                    }
+                  }, 0);
                 }}
               >
-                <h1>Save Set</h1>
+                <h1>Save</h1>
               </button>
+              {!set.published ? (
+                <button
+                  className="col-span-1 h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
+                  onClick={() => {
+                    editSet(true, "published");
+                    setTimeout(async () => {
+                      const res = await saveSet(set.id, cardData);
+                      if (res?.code === 200) {
+                        router.push(`/sets/${set.id}`);
+                      } else {
+                        console.error(res);
+                      }
+                    }, 0);
+                  }}
+                >
+                  <h1>Publish</h1>
+                </button>
+              ) : null}
             </div>
           </div>
         </aside>

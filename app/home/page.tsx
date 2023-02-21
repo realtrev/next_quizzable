@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Loading from "../loading";
 
 import type { User, Set } from "../types";
+import Navbar from "../navbar";
 
 function ButtonToStudySet(props: { set: Set; key: string }) {
   const router = useRouter();
@@ -102,37 +103,57 @@ function Page() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center">
-      <button
-        className="my-3 mx-auto text-center"
-        onClick={() => router.push("/home")}
+    <main className="flex min-h-screen w-full flex-col items-center gap-10 pb-10">
+      <Navbar user={userData} />
+
+      <section
+        className="mx-auto flex max-w-4xl flex-col gap-5"
+        id="favoritedSets"
       >
-        <h1 className="text-4xl text-blue-500">Quizzable</h1>
-      </button>
-      <h2 className="text-xl text-gray-600">Welcome, {userData.username}</h2>
-      <div className="m-5 grid w-[49.25rem] grid-cols-2 gap-5">
-        <h1 className="col-span-2 text-left text-2xl">Favorited Sets</h1>
-        {userData.expand.favoriteSets.map((set: Set) => {
-          return <ButtonToStudySet set={set} key={set.id} />;
-        })}
-        {
-          // if the user has no favorited sets, show a button to create a new set
-          userData.expand.favoriteSets.length === 0 && (
-            <div className="col-span-2 flex h-44 w-full items-center">
-              <h1 className="text-md w-0 min-w-full select-none text-center font-normal text-gray-400">
-                You don't have any favorited sets yet.
-              </h1>
-            </div>
-          )
-        }
-      </div>
-      <div className="m-5 grid w-[49.25rem] grid-cols-2 gap-5">
+        <div className="m-5 grid w-[49.25rem] grid-cols-2 gap-5">
+          <h1 className="col-span-2 text-left text-2xl">Favorited Sets</h1>
+          {userData.expand.favoriteSets.map((set: Set) => {
+            return <ButtonToStudySet set={set} key={set.id} />;
+          })}
+          {
+            // if the user has no favorited sets, show a button to create a new set
+            userData.expand.favoriteSets.length === 0 && (
+              <div className="col-span-2 flex h-44 w-full items-center">
+                <h1 className="text-md w-0 min-w-full select-none text-center font-normal text-gray-400">
+                  You don't have any favorited sets yet.
+                </h1>
+              </div>
+            )
+          }
+        </div>
+      </section>
+
+      <section className="grid max-w-4xl grid-cols-2 gap-5" id="mySets">
         <h1 className="col-span-2 text-left text-2xl">Your Sets</h1>
         <CreateStudySet />
-        {userData.expand.sets.map((set: Set) => {
-          return <ButtonToStudySet set={set} key={set.id} />;
-        })}
-      </div>
+        {/* filter out any published vs unpublished sets */}
+        {userData.expand.sets
+          .filter((set: Set) => set.published)
+          .map((set: Set) => {
+            return <ButtonToStudySet set={set} key={set.id} />;
+          })}
+      </section>
+
+      {userData.expand.sets.filter((set: Set) => !set.published).length > 0 ? (
+        <section
+          className="mx-auto flex max-w-4xl flex-col gap-5"
+          id="myDrafts"
+        >
+          <div className="m-5 grid w-[49.25rem] grid-cols-2 gap-5">
+            <h1 className="col-span-2 text-left text-2xl">Your Drafts</h1>
+            {userData.expand.sets
+              .filter((set: Set) => !set.published)
+              .map((set: Set) => {
+                return <ButtonToStudySet set={set} key={set.id} />;
+              })}
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }

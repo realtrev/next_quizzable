@@ -75,10 +75,10 @@ function Page({ params }: { params: { setId: string } }) {
   }, []);
 
   function editSet(
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    field: "title" | "description" | "visibility"
+    value: string | boolean,
+    field: "title" | "description" | "visibility" | "published"
   ) {
-    set[field] = event.target?.value;
+    set[field] = value;
     set.isEdited = true;
   }
 
@@ -139,19 +139,18 @@ function Page({ params }: { params: { setId: string } }) {
     return <div className="min-h-screen w-full">User data not found</div>;
   }
 
-  window.cards = cardData;
-
   async function saveSet(
     setId: string = set.id,
-    newCardData: EditedCard[] = cardData
+    newCardData: EditedCard[] = cardData,
+    setData: EditedSet = set
   ) {
     // PUT is for updating, POST is for creating
     const method = setId !== "" ? "PUT" : "POST";
 
     console.log("SAVING", {
-      ...set,
+      ...setData,
       expand: {
-        ...set.expand,
+        ...setData.expand,
         cards: newCardData,
       },
     });
@@ -162,9 +161,9 @@ function Page({ params }: { params: { setId: string } }) {
         .send("/api/quizzable/sets/" + setId, {
           method: method,
           body: {
-            ...set,
+            ...setData,
             expand: {
-              ...set.expand,
+              ...setData.expand,
               cards: newCardData,
             },
           },
@@ -175,7 +174,7 @@ function Page({ params }: { params: { setId: string } }) {
 
     if (response.code !== 200) {
       console.error(response);
-      return;
+      return response;
     }
 
     // if the request failed, return
@@ -202,11 +201,40 @@ function Page({ params }: { params: { setId: string } }) {
       (newSetData?.expand?.cards as EditedCard[]) ?? ([] as EditedCard[])
     );
     setSet({
-      ...set,
+      ...setData,
       ...newSetData,
     });
-    window.cards =
-      (newSetData?.expand?.cards as EditedCard[]) ?? ([] as EditedCard[]);
+
+    return response;
+  }
+
+  async function deleteSet() {
+    console.log("Deleting set");
+    if (!userData) {
+      console.error("No user data found");
+      return;
+    }
+
+    if (!set) {
+      console.error("No set data found");
+      return;
+    }
+
+    // delete the set
+
+    const response = (await pb
+      .send(`/api/quizzable/sets/${set.id}`, {
+        method: "DELETE",
+      })
+      .catch(console.error)) as {
+      code: number;
+      data: object;
+      message: string;
+    };
+
+    if (response) {
+      router.push("/home");
+    }
   }
 
   return (
@@ -267,22 +295,44 @@ function Page({ params }: { params: { setId: string } }) {
               className="block h-10 w-full appearance-none rounded-md border border-gray-300 bg-gray-100 px-4 leading-normal outline-none hover:border-gray-400 focus:border-blue-500 focus:bg-gray-200"
               type="text"
               placeholder="Give your set a title!"
-              onChange={(e) => editSet(e, "title")}
+              onChange={(e) => editSet(e.target.value, "title")}
               onBlur={() => saveSet()}
             />
 
             <textarea
               className="block h-[7.5rem] w-full resize-none appearance-none rounded-md border border-gray-300 bg-gray-100 py-2 px-4 leading-normal outline-none hover:border-gray-400 focus:border-blue-500 focus:bg-gray-200"
               placeholder="Enter a description..."
-              onChange={(e) => editSet(e, "description")}
+              onChange={(e) => editSet(e.target.value, "description")}
               onBlur={() => saveSet()}
             />
 
             <div className="grid h-10 grid-cols-2 gap-3">
-              <button className="col-span-1 h-full rounded-md bg-gray-400 px-4 font-bold text-white transition-all duration-200 hover:bg-gray-600">
+              <button
+                className="col-span-1 h-full rounded-md bg-gray-400 px-4 font-bold text-white transition-all duration-200 hover:bg-gray-600"
+                onClick={async () => {
+                  // if the set has an id, delete it
+                  if (set.id !== "") {
+                    await deleteSet();
+                  }
+                  router.push("/home");
+                }}
+              >
                 <h1>Cancel</h1>
               </button>
-              <button className="col-span-1 h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700">
+              <button
+                className="col-span-1 h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
+                onClick={() => {
+                  editSet(true, "published");
+                  setTimeout(async () => {
+                    const res = await saveSet(set.id, cardData);
+                    if (res?.code === 200) {
+                      router.push(`/sets/${set.id}`);
+                    } else {
+                      console.error(res);
+                    }
+                  }, 0);
+                }}
+              >
                 <h1>Create Set</h1>
               </button>
             </div>

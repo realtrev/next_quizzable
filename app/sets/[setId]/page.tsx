@@ -1,5 +1,5 @@
 "use client";
-import PocketBase from "pocketbase";
+import PocketBase, { BaseAuthStore } from "pocketbase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Loading from "../../loading";
@@ -9,6 +9,7 @@ import CardElem from "./cards";
 import "./flip.css";
 
 import type { User, Set, EditedSet } from "../../types";
+import Navbar from "../../navbar";
 
 function Page({ params }: { params: { setId: string } }) {
   const router = useRouter();
@@ -37,40 +38,50 @@ function Page({ params }: { params: { setId: string } }) {
       console.log(response);
       setSetData(response);
 
+      if (!response.published) {
+        console.log("Set is not published");
+        router.push(`/sets/${response.id}/edit`);
+        return;
+      }
+
       // check if the user is already logged in
       const user = pb.authStore;
       if (user.isValid && user.model) {
-        console.log(user.model);
-        const id = user.model?.id;
-        if (!id) {
-          console.error("No user id found");
-          // return;
-        }
-
-        const newUserData: User = await pb
-          .collection("users")
-          .getOne(user.model.id, {
-            expand: "favoriteSets,favoriteSets.author,sets,sets.author",
-          });
-
-        setUserData(newUserData);
-
-        if (newUserData && response.author === newUserData.id) {
-          setIsAuthor(true);
-          console.log("User is set author");
-        }
-
-        // Check if the set is favorited, by whether the set id is in the user's favoriteSets array
-        if (newUserData.favoriteSets) {
-          if (newUserData.favoriteSets.some((set) => set === response.id)) {
-            setIsFavorited(true);
-          }
-        }
+        await getUserData(user, response);
       }
       setLoading(false);
     };
     func().catch(console.error);
   }, []);
+
+  async function getUserData(user: BaseAuthStore, response: EditedSet) {
+    console.log(user.model);
+    const id = user.model?.id;
+    if (!user.model || !id) {
+      console.error("No user id found");
+      // return;
+    }
+
+    const newUserData: User = await pb
+      .collection("users")
+      .getOne(user.model.id, {
+        expand: "favoriteSets,favoriteSets.author,sets,sets.author",
+      });
+
+    setUserData(newUserData);
+
+    if (newUserData && response.author === newUserData.id) {
+      setIsAuthor(true);
+      console.log("User is set author");
+    }
+
+    // Check if the set is favorited, by whether the set id is in the user's favoriteSets array
+    if (newUserData.favoriteSets) {
+      if (newUserData.favoriteSets.some((set) => set === response.id)) {
+        setIsFavorited(true);
+      }
+    }
+  }
 
   async function toggleFavorite() {
     if (!userData) {
@@ -143,16 +154,9 @@ function Page({ params }: { params: { setId: string } }) {
   }
 
   return (
-    <main className="min-h-screen w-full">
-      <section className="flex h-16 w-full items-center justify-center">
-        <button
-          className="my-3 mx-auto text-center"
-          onClick={() => router.push("/home")}
-        >
-          <h1 className="text-4xl text-blue-500">Quizzable</h1>
-        </button>
-      </section>
-      <section className="mx-auto flex max-w-4xl flex-col gap-5 p-10">
+    <main className="flex min-h-screen w-full flex-col items-center gap-10 pb-10">
+      <Navbar user={userData ?? undefined} />
+      <section className="flex w-full max-w-4xl flex-col gap-5 px-10">
         <h1 className="text-left text-3xl font-bold">{setData.title}</h1>
         <div className="grid hidden h-12 w-full grid-cols-5 flex-row justify-between gap-2">
           {[
@@ -188,63 +192,72 @@ function Page({ params }: { params: { setId: string } }) {
         </div>
         <CardElem cards={setData.expand.cards} />
       </section>
-      <section className="mx-auto flex max-w-4xl justify-between gap-4 p-10">
-        <div className="flex gap-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500"></div>
-          <div className="flex flex-col justify-center">
-            <h1 className="m-0 p-0 text-left text-xs font-normal text-gray-500">
-              Created by
-            </h1>
-            <h1 className="m-0 p-0 text-left text-xl font-medium" id="author">
-              {setData.expand.author.username}
-            </h1>
+      <section className="flex w-full max-w-4xl flex-col gap-5 px-10">
+        <div className="flex w-full justify-between gap-4">
+          <div className="flex gap-5">
+            <div className="flex hidden h-12 w-12 items-center justify-center rounded-full bg-blue-500"></div>
+            <div className="flex flex-col justify-center">
+              <h1 className="m-0 p-0 text-left text-xs font-normal text-gray-500">
+                Created by
+              </h1>
+              <h1 className="m-0 p-0 text-left text-xl font-medium" id="author">
+                {setData.expand.author.username}
+              </h1>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            {userData ? (
+              <button
+                className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
+                onClick={() => {
+                  toggleFavorite().catch(console.error);
+                }}
+              >
+                <h1>
+                  {isFavorited ? "Remove from Favorites" : "Add to Favorites"}
+                </h1>
+              </button>
+            ) : (
+              <button
+                className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
+                onClick={() =>
+                  router.push(`/login?redirect=/sets/${setData.id}`)
+                }
+              >
+                <h1>Login to favorite</h1>
+              </button>
+            )}
+            <button
+              className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
+              onClick={() => console.log("share")}
+            >
+              <h1>Share</h1>
+            </button>
+            {isAuthor ? (
+              <button
+                className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
+                onClick={() => router.push(`/sets/${setData.id}/edit`)}
+              >
+                <h1>Edit</h1>
+              </button>
+            ) : null}
+            {isAuthor ? (
+              <button
+                className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
+                onClick={() => deleteSet().catch(console.error)}
+              >
+                <h1>Delete</h1>
+              </button>
+            ) : null}
           </div>
         </div>
-        <div className="ml-auto flex gap-4">
-          {userData ? (
-            <button
-              className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
-              onClick={() => {
-                toggleFavorite().catch(console.error);
-              }}
-            >
-              <h1>
-                {isFavorited ? "Remove from Favorites" : "Add to Favorites"}
-              </h1>
-            </button>
-          ) : (
-            <button
-              className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
-              onClick={() => router.push(`/login?redirect=/sets/${setData.id}`)}
-            >
-              <h1>Login to favorite</h1>
-            </button>
-          )}
-          <button
-            className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
-            onClick={() => console.log("share")}
-          >
-            <h1>Share</h1>
-          </button>
-          {isAuthor ? (
-            <button
-              className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
-              onClick={() => router.push(`/sets/${setData.id}/edit`)}
-            >
-              <h1>Edit</h1>
-            </button>
-          ) : null}
-          {isAuthor ? (
-            <button
-              className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
-              onClick={() => deleteSet().catch(console.error)}
-            >
-              <h1>Delete</h1>
-            </button>
-          ) : null}
-        </div>
+        {setData.description ? (
+          <div className="flex w-full max-w-4xl justify-between gap-4 text-left text-gray-600">
+            <p>{setData.description}</p>
+          </div>
+        ) : null}
       </section>
-      <section className="mx-auto flex max-w-4xl flex-col gap-5 p-10">
+      <section className="flex w-full max-w-4xl flex-col gap-5 px-10">
         {setData?.expand?.cards?.map((card, i) => {
           return (
             <div

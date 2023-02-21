@@ -7,6 +7,7 @@ type Set = {
   author: string;
   visibility: string;
   cards: Array<string>;
+  published: boolean;
   expand: {
     author: User;
     cards: Array<Card> | null;
