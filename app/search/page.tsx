@@ -36,21 +36,6 @@ function ButtonToStudySet(props: { set: Set }, key: number) {
   );
 }
 
-function CreateStudySet() {
-  const router = useRouter();
-
-  return (
-    <button
-      className="col-span-1 flex h-44 w-96 grow-0 flex-col items-center justify-center rounded-md border border-gray-200 p-4 transition-all duration-300 hover:bg-offwhite hover:shadow"
-      onClick={() => router.push(`/sets/create`)}
-    >
-      <h1 className="w-0 min-w-full truncate text-center text-xl font-semibold text-gray-500">
-        Create a new set
-      </h1>
-    </button>
-  );
-}
-
 function Page() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -88,7 +73,7 @@ function Page() {
       }
 
       // Get the search query from the URL
-      const query = searchParams.get("q").trim();
+      const query = searchParams.get("q");
       const type = searchParams.get("c") ?? "sets";
       const page = searchParams.get("p") ?? "0";
       let pageNumber = 0;
@@ -114,7 +99,7 @@ function Page() {
 
       setSearchType(type);
 
-      await handleSearch(query, type, pageNumber);
+      await handleSearch(query.trim(), type, pageNumber);
 
       setLoading(false);
     };
@@ -175,11 +160,16 @@ function Page() {
         </h1>
         {searchResults?.items.map((result, index) => {
           if (searchType === "sets") {
-            return <ButtonToStudySet set={result as Set} key={result.id} />;
+            return (
+              <ButtonToStudySet
+                set={result as Set}
+                key={"res" + index.toString()}
+              />
+            );
           }
         })}
         {searchResults?.items.length === 0 ? (
-          <h1 className="col-span-2 flex h-36 items-center justify-center text-center text-4xl text-gray-300 select-none">
+          <h1 className="col-span-2 flex h-36 select-none items-center justify-center text-center text-4xl text-gray-300">
             No results found
           </h1>
         ) : null}

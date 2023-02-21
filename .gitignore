@@ -45,7 +45,8 @@ yarn-error.log*
 */**/pb_data/*
 */**/errors.log
 */**/go.sum
-*/**/pocketbase_old
+*/**/pocketbase
+*/**/quizzable
 
 # vscode
 .vscode

@@ -8,7 +8,7 @@ import CardElem from "./cards";
 // import css from flip.css
 import "./flip.css";
 
-import type { User, Set, EditedSet } from "../../types";
+import type { User, Set, EditedSet, Card } from "../../types";
 import Navbar from "../../navbar";
 
 function Page({ params }: { params: { setId: string } }) {
@@ -59,7 +59,7 @@ function Page({ params }: { params: { setId: string } }) {
     const id = user.model?.id;
     if (!user.model || !id) {
       console.error("No user id found");
-      // return;
+      return;
     }
 
     const newUserData: User = await pb
@@ -190,7 +190,7 @@ function Page({ params }: { params: { setId: string } }) {
             </button>
           ))}
         </div>
-        <CardElem cards={setData.expand.cards} />
+        <CardElem cards={setData.expand.cards ?? ([] as Card[])} />
       </section>
       <section className="flex w-full max-w-4xl flex-col gap-5 px-10">
         <div className="flex w-full justify-between gap-4">

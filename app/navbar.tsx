@@ -5,16 +5,20 @@ import type { User } from "./types";
 function Navbar(props: {
   user?: User;
   searchDefault?: string;
-  onSearch?: (query, category, page) => void;
+  onSearch?: (query: string, category: "sets" | "users", page: number) => any;
 }) {
   const router = useRouter();
 
-  const currentPage = window.location.pathname;
+  const currentPage = window?.location?.pathname;
 
   function search(query: string, category = "sets") {
     if (query.trim() === "") return;
 
     router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+
+    if (!(category == "sets" || category == "users")) {
+      return;
+    }
 
     if (props.onSearch) props.onSearch(query, category, 0);
   }
@@ -30,25 +34,27 @@ function Navbar(props: {
         <h1 className="text-3xl text-blue-500">Quizzable</h1>
       </button>
       <ul className="flex shrink-0 justify-center gap-5">
-        {[{ name: "Home", link: "/home" }].map((item, i) => {
-          const current = currentPage === item.link ? true : false;
+        {[{ name: "Home", link: "/home" }].map(
+          (item: { name: string; link: string }, i) => {
+            const current = currentPage === item.link ? true : false;
 
-          return (
-            <li>
-              <button key={i} onClick={() => router.push(item.link)}>
-                <h1
-                  className={`${
-                    current
-                      ? "font-bold text-blue-500"
-                      : "font-normal text-gray-500"
-                  } text-lg  transition-all duration-200 hover:text-blue-700`}
-                >
-                  {item.name}
-                </h1>
-              </button>
-            </li>
-          );
-        })}
+            return (
+              <li key={item.name + i.toString()}>
+                <button onClick={() => router.push(item.link)}>
+                  <h1
+                    className={`${
+                      current
+                        ? "font-bold text-blue-500"
+                        : "font-normal text-gray-500"
+                    } text-lg  transition-all duration-200 hover:text-blue-700`}
+                  >
+                    {item.name}
+                  </h1>
+                </button>
+              </li>
+            );
+          }
+        )}
       </ul>
       <div className="flex grow items-center justify-center gap-2">
         <input
@@ -56,13 +62,19 @@ function Navbar(props: {
           placeholder="Search"
           id="search"
           onKeyDown={(e) => {
-            if (e.key === "Enter" && document.getElementById("search")?.value) {
-              search(document.getElementById("search")?.value);
+            const searchBar = document.getElementById(
+              "search"
+            ) as HTMLInputElement;
+            if (e.key === "Enter") {
+              search(searchBar.value);
             }
           }}
           onSubmit={(e) => {
             e.preventDefault();
-            search(document.getElementById("search")?.value);
+            const searchBar = document.getElementById(
+              "search"
+            ) as HTMLInputElement;
+            search(searchBar.value);
           }}
         />
         <button
@@ -88,9 +100,9 @@ function Navbar(props: {
         )}
         <button
           className="h-10 rounded-md bg-orange-300 px-4 font-bold text-gray-700 transition-all duration-200 hover:bg-orange-400"
-          onClick={() => router.push("/login")}
+          onClick={() => window.open("https://trevord.live/")}
         >
-          <h1>View Other Projects</h1>
+          <h1>{"View Trevor's Other Projects"}</h1>
         </button>
       </div>
     </nav>

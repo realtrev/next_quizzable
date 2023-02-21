@@ -92,7 +92,7 @@ function Page({ params }: { params: { setId: string } }) {
         }
 
         setSet(response);
-        setCardData(response?.expand?.cards ?? []);
+        setCardData((response?.expand?.cards as EditedCard[]) ?? []);
 
         setLoading(false);
       }
@@ -104,8 +104,7 @@ function Page({ params }: { params: { setId: string } }) {
     value: string | boolean,
     field: "title" | "description" | "visibility" | "published"
   ) {
-    set[field] = value;
-    set.isEdited = true;
+    setSet({ ...set, [field]: value, isEdited: true });
   }
 
   function editCard(
@@ -156,10 +155,14 @@ function Page({ params }: { params: { setId: string } }) {
   //   when set data is changed, update the title and description
   useEffect(() => {
     if (set?.title) {
-      document.getElementById("title").value = set.title;
+      const titleElement = document.getElementById("title") as HTMLInputElement;
+      titleElement.value = set.title;
     }
     if (set?.description) {
-      document.getElementById("description").value = set.description;
+      const descriptionElement = document.getElementById(
+        "description"
+      ) as HTMLInputElement;
+      descriptionElement.value = set.description;
     }
     if (set?.visibility) {
       // pass
@@ -177,8 +180,6 @@ function Page({ params }: { params: { setId: string } }) {
   if (!userData) {
     return <div className="min-h-screen w-full">User data not found</div>;
   }
-
-  window.cards = cardData;
 
   async function saveSet(
     setId: string = set.id,
@@ -373,7 +374,7 @@ function CardElement(props: {
     event: ChangeEvent<HTMLInputElement>,
     card: EditedCard,
     field: "term" | "definition" | "image"
-  ): EditedCard;
+  ): EditedCard | undefined;
   deleteCard(card: EditedCard): void;
   saveSet(autoSave?: boolean): void;
   card: EditedCard;
@@ -388,7 +389,7 @@ function CardElement(props: {
         placeholder="Enter a term..."
         onChange={(e) => {
           card.term = e.target.value;
-          card = props.editCard(e, card, "term");
+          card = props.editCard(e, card, "term") ?? card;
         }}
         value={card.term}
       />
@@ -399,7 +400,7 @@ function CardElement(props: {
           placeholder="Enter a definition..."
           onChange={(e) => {
             card.definition = e.target.value;
-            card = props.editCard(e, card, "definition");
+            card = props.editCard(e, card, "definition") ?? card;
           }}
           value={card.definition}
         />

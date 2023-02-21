@@ -44,3 +44,8 @@ Leaderboards are a way to see how you compare to other users. You can see the to
 
 - See the top 10 users for each category
 - See your position on the leaderboard
+
+# Compiling/Deploying
+
+Compiling and deploying Quizzable is easy. You can either compile it yourself, or use the precompiled version of the backend.
+`go build -o pocketbase/quizzable`

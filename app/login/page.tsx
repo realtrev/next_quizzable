@@ -74,7 +74,7 @@ function Page() {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full">
+      <div className="flex min-h-screen w-full items-center justify-center">
         <Loading />
       </div>
     );
@@ -84,7 +84,7 @@ function Page() {
     <div className="bg-white">
       <main className="flex min-h-screen flex-col items-center justify-center">
         <div className="container flex flex-col items-center justify-center gap-4 px-4 py-16">
-          <h1 className="select-none text-6xl font-medium tracking-tight text-primary">
+          <h1 className="select-none text-6xl font-medium tracking-tight text-blue-500">
             Quizzable
           </h1>
           <div>
@@ -96,7 +96,7 @@ function Page() {
             <div>
               <button
                 type="button"
-                className="flex h-12 w-80 items-center justify-center rounded border border-gray-200 bg-opacity-0 px-3 text-sm font-medium text-subheading outline-none placeholder:text-gray-300 hover:bg-offwhite focus:border-primary"
+                className="flex h-12 w-80 items-center justify-center rounded border border-gray-200 bg-opacity-0 px-3 text-sm font-medium text-subheading outline-none placeholder:text-gray-300 hover:bg-offwhite focus:border-blue-500"
                 onClick={() => handleLogin("google")}
               >
                 <span className="ml-5">Continue with Google</span>
@@ -121,7 +121,7 @@ function Page() {
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="email"
                 placeholder="Enter your email or username"
-                className="block h-12 w-80 rounded border border-gray-200 bg-opacity-0 px-3 text-sm font-medium text-subheading outline-none placeholder:text-gray-300 focus:border-primary"
+                className="block h-12 w-80 rounded border border-gray-200 bg-opacity-0 px-3 text-sm font-medium text-subheading outline-none placeholder:text-gray-300 focus:border-blue-500"
               />
             </div>
             <div>
@@ -138,14 +138,14 @@ function Page() {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 placeholder="Enter your password"
-                className="block h-12 w-80 rounded border border-gray-200 bg-opacity-0 px-3 text-sm font-medium text-subheading outline-none placeholder:text-gray-300 focus:border-primary"
+                className="block h-12 w-80 rounded border border-gray-200 bg-opacity-0 px-3 text-sm font-medium text-subheading outline-none placeholder:text-gray-300 focus:border-blue-500"
               />
             </div>
             <div>
               <button
                 type="button"
                 onClick={() => handleLogin("email")}
-                className="mt-2 flex h-12 w-80 items-center justify-center rounded bg-primary px-3 text-sm font-medium text-white outline-none transition-all duration-200 placeholder:text-gray-300 hover:brightness-75 focus:border-primary focus:brightness-75"
+                className="mt-2 flex h-12 w-80 items-center justify-center rounded bg-blue-500 px-3 text-sm font-medium text-white outline-none transition-all duration-200 placeholder:text-gray-300 hover:brightness-75 focus:border-blue-500 focus:brightness-75"
               >
                 Log in
               </button>
