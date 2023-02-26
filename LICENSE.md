@@ -187,6 +187,8 @@ Where the Licensed Rights include Sui Generis Database Rights that apply to Your
   <br />
   <li>
     You must comply with the conditions in Section 3(a) if You Share all or a substantial portion of the contents of the database.
+  </li>
+</ol>
 
 For the avoidance of doubt, this Section 4 supplements and does not replace Your obligations under this Public License where the Licensed Rights include other Copyright and Similar Rights.
 
