@@ -40,12 +40,7 @@ const securityHeaders = [
 const config = {
   reactStrictMode: true,
   async rewrites() {
-    return [
-      {
-        source: "/",
-        destination: "/login",
-      },
-    ];
+    return [];
   },
   async redirects() {
     return [

@@ -2,27 +2,137 @@
 @tailwind components;
 @tailwind utilities;
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: "Outfit", sans-serif;
-  font-weight: 500;
+.blurry-shadow {
+  --tw-shadow: 0 20px 100px -50px var(--tw-shadow-color);
+  box-shadow: var(--tw-shadow);
+}
+
+.hover\:blurry-shadow:hover {
+  --tw-shadow: 0 20px 100px -50px var(--tw-shadow-color);
+  box-shadow: var(--tw-shadow);
+}
+
+.hover\:blurry-shadow-sm:hover {
+  --tw-shadow: 0 20px 50px -25px var(--tw-shadow-color);
+  box-shadow: var(--tw-shadow);
+}
+
+.blurry-shadow-sm {
+  --tw-shadow: 0 20px 50px -25px var(--tw-shadow-color);
+  box-shadow: var(--tw-shadow);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 p {
-  font-family: "Outfit", sans-serif;
-  font-weight: 400;
+  @apply text-base;
+  margin-top: 0.5rem /* 8px */;
+  /* color: inherit; */
+  font-family: "Work Sans", sans-serif;
+}
+
+h2 {
+  @apply text-4xl text-white;
+  font-family: "Figtree", sans-serif;
+  font-weight: 700;
+}
+
+h3 {
+  font-family: "Figtree", sans-serif;
+  font-weight: 600;
+  @apply text-xl text-white;
+}
+
+h4 {
+  font-family: "Figtree", sans-serif;
+  font-weight: 500;
+  @apply text-lg text-gray-400;
+}
+
+h6 {
+  font-family: "Figtree", sans-serif;
+  font-weight: 500;
+  @apply mb-4 text-sm font-semibold uppercase tracking-wider text-primary;
+}
+
+main {
+  @apply bg-background-1 text-paragraph;
+  font-family: "Work Sans", sans-serif;
+  overflow-x: hidden;
+  color: #bbb;
+}
+
+nav {
+  @apply flex max-w-4xl items-center justify-between;
+}
+
+.body {
+  @apply relative mx-auto max-w-5xl px-5;
+}
+
+h1 {
+  @apply text-white;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 900;
+  font-size: 2.8rem;
+  line-height: 3.7rem;
+}
+
+.font-body {
+  font-family: "Work Sans", sans-serif;
+}
+
+.font-heading {
+  font-family: "Montserrat", sans-serif;
+}
+
+.font-subheading,
+.font-nav {
+  font-family: "Figtree", sans-serif;
 }
 
 input {
-  font-family: "Outfit", sans-serif;
+  font-family: "Figtree", sans-serif;
+}
+
+nav > ul {
+  @apply flex items-center gap-4;
+}
+
+.button {
+  /* @apply px-5 py-1.5 bg-slate-500 border border-slate-400 text-white rounded-md cursor-pointer duration-200 ease-out hover:shadow hover:bg-slate-600 hover:border-slate-500; */
+  @apply cursor-pointer;
+  font-family: "Figtree", sans-serif;
   font-weight: 500;
 }
 
-textarea {
-  font-family: "Outfit", sans-serif;
-  font-weight: 400;
+.button.primary {
+  @apply cursor-pointer rounded-md bg-primary px-5 py-1.5 text-white hover:bg-blue-700;
 }
+
+.wordmark {
+  font-family: "Figtree", sans-serif;
+  font-weight: 700;
+  font-size: 1.7rem;
+  line-height: 1.7rem;
+  @apply cursor-pointer select-none text-primary;
+}
+
+.wordmark.white {
+  @apply text-white;
+}
+
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Optional: Customize .focus-visible */
+/* a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #fff;
+} */

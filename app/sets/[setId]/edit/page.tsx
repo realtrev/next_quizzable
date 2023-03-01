@@ -2,10 +2,10 @@
 import PocketBase from "pocketbase";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, useEffect, useState } from "react";
-import Loading from "../../../loading";
+import Loading from "../../../Loading";
 
 import type { User, EditedSet, EditedCard } from "../../../types";
-import Navbar from "../../../navbar";
+import Navbar from "../../../Navbar";
 
 function Page({ params }: { params: { setId: string } }) {
   const router = useRouter();

@@ -3,10 +3,10 @@ import PocketBase from "pocketbase";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getAuthData } from "../auth";
 import { useEffect, useState } from "react";
-import Loading from "../loading";
+import Loading from "../Loading";
 
 import type { User, Set } from "../types";
-import Navbar from "../navbar";
+import Navbar from "../Navbar";
 
 function ButtonToStudySet(props: { set: Set }, key: number) {
   const router = useRouter();
@@ -18,7 +18,7 @@ function ButtonToStudySet(props: { set: Set }, key: number) {
 
   return (
     <button
-      className="col-span-1 flex h-44 w-96 grow-0 flex-col rounded-md border border-gray-200 p-4 transition-all duration-300 hover:bg-offwhite hover:shadow"
+      className="hover:bg-offwhite col-span-1 flex h-44 w-96 grow-0 flex-col rounded-md border border-gray-200 p-4 transition-all duration-300 hover:shadow"
       onClick={() => router.push(`/sets/${id}`)}
       key={key}
     >

@@ -1,9 +1,8 @@
 "use client";
 import PocketBase from "pocketbase";
 import { useSearchParams, useRouter } from "next/navigation";
-import { getAuthData } from "../../../auth";
 import { useState } from "react";
-import Loading from "../../../loading";
+import { LoadingPage } from "../../../components/Loading";
 
 function Page() {
   const params = useSearchParams();
@@ -42,7 +41,7 @@ function Page() {
         return;
       }
 
-      const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI;
+      const redirectUri = process.env.NEXT_PUBLIC_OAUTH2_URL;
 
       if (typeof redirectUri !== "string") {
         console.error("Failed to get redirect uri from env");
@@ -73,11 +72,7 @@ function Page() {
     router.push("/login");
   }
 
-  return (
-    <div className="flex min-h-screen w-full items-center justify-center">
-      <Loading />
-    </div>
-  );
+  return <LoadingPage />;
 }
 
 export default Page;

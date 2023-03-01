@@ -4,15 +4,23 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // bright blue for primary color
-        primary: "#0197F6",
-        secondary: "#FABC3C",
-        accent: "#1BC2C1",
-        offwhite: "#F6F6F6",
-        heading: "#1E1E1E",
-        subheading: "#1E1E1E",
-        body: "#1E1E1E",
-        links: "#1BC2C1",
+        primary: "#2266FF",
+        "primary-dark": "#1a4db8",
+        secondary: "#dc4dda",
+        tertiary: "#ff886e",
+        quaternary: "#ffcc00",
+        highlight: "#f9f871",
+        teal: "#1dc198",
+        sky: "#1dc1c1",
+        purple: "#c11dc1",
+        background: {
+          1: "#121212",
+          2: "#151515",
+          3: "#1E1E1E",
+          4: "#2B2B2B",
+          text: "#888",
+        },
+        paragraph: "#BBBBBB",
       },
     },
   },

@@ -2,7 +2,7 @@
 import PocketBase from "pocketbase";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, useEffect, useState } from "react";
-import Loading from "../../loading";
+import Loading from "../../Loading";
 
 import type { User, EditedSet, EditedCard } from "../../types";
 

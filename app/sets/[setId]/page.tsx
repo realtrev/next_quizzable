@@ -2,14 +2,14 @@
 import PocketBase, { BaseAuthStore } from "pocketbase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import Loading from "../../loading";
+import Loading from "../../Loading";
 import Image from "next/image";
 import CardElem from "./cards";
 // import css from flip.css
 import "./flip.css";
 
 import type { User, Set, EditedSet, Card } from "../../types";
-import Navbar from "../../navbar";
+import Navbar from "../../Navbar";
 
 function Page({ params }: { params: { setId: string } }) {
   const router = useRouter();
@@ -262,7 +262,7 @@ function Page({ params }: { params: { setId: string } }) {
           return (
             <div
               key={i}
-              className="grid w-full grid-cols-2 gap-5 rounded border border-gray-300 bg-offwhite p-5"
+              className="bg-offwhite grid w-full grid-cols-2 gap-5 rounded border border-gray-300 p-5"
             >
               <h1 className="col-span-1">{card.term}</h1>
               <h1 className="col-span-1 font-normal text-gray-600">

@@ -1,4 +1,4 @@
-type Set = {
+interface Set extends Record<string, any> {
   id: string;
   title: string;
   description: string;
@@ -12,9 +12,9 @@ type Set = {
     author: User;
     cards: Array<Card> | null;
   };
-};
+}
 
-type Card = {
+interface Card extends Record<string, any> {
   id: string;
   term: string;
   definition: string;
@@ -23,9 +23,9 @@ type Card = {
   set: string;
   expand: object;
   image: string | null;
-};
+}
 
-type User = {
+interface User extends Record<string, any> {
   avatar: string;
   collectionId: string;
   collectionName: string;
@@ -43,12 +43,18 @@ type User = {
   updated: string;
   username: string;
   verified: boolean;
-};
+}
 
 // edited set is the same as server set but with, isEdited: boolean
-type EditedSet = Set & { isEdited: boolean; isDeleted: boolean };
+interface EditedSet extends Set {
+  isEdited: boolean;
+  isDeleted: boolean;
+}
 
 // edited card is the same as card but with, isEdited: boolean
-type EditedCard = Card & { isEdited: boolean; isDeleted: boolean };
+interface EditedCard extends Card {
+  isEdited: boolean;
+  isDeleted: boolean;
+}
 
 export type { Set, Card, User, EditedCard, EditedSet };

@@ -1,0 +1,5 @@
+.input {
+  @apply flex h-12 w-full items-center justify-center rounded-md border border-background-4 bg-background-3 px-4 text-sm text-white shadow-primary duration-200 placeholder:text-gray-400 hover:border-transparent hover:border-primary focus:border-primary;
+  font-family: "Work Sans", sans-serif;
+  outline: none;
+}
