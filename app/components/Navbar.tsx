@@ -1,9 +1,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import type { User } from "./types";
+import type { User } from "../../lib/types";
 
 function Navbar(props: {
-  user?: User;
+  userData?: User;
   searchDefault?: string;
   onSearch?: (query: string, category: "sets" | "users", page: number) => any;
 }) {
@@ -85,9 +85,11 @@ function Navbar(props: {
         </button>
       </div>
       <div id="account" className="flex shrink-0 justify-center gap-5">
-        {props.user ? (
+        {props.userData ? (
           <button className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 font-bold text-white transition-all duration-200 hover:bg-blue-700">
-            <h1 className="text-xl">{props.user.username.substring(0, 1)}</h1>
+            <h1 className="text-xl">
+              {props.userData.username.substring(0, 1)}
+            </h1>
           </button>
         ) : (
           // login

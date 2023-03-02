@@ -2,10 +2,9 @@
 import PocketBase from "pocketbase";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, useEffect, useState } from "react";
-import Loading from "../../../Loading";
+import Loading from "../../../components/Loading";
 
 import type { User, EditedSet, EditedCard } from "../../../../lib/types";
-import Navbar from "../../../Navbar";
 
 function Page({ params }: { params: { setId: string } }) {
   const router = useRouter();
@@ -251,8 +250,6 @@ function Page({ params }: { params: { setId: string } }) {
 
   return (
     <div className="min-h-screen w-full">
-      <Navbar user={userData} />
-
       <section className="mx-auto flex max-w-6xl gap-5 p-10">
         <main className="grow">
           <div className="grid grid-cols-2 gap-5">

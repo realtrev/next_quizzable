@@ -15,11 +15,11 @@ function Navbar() {
           <Link href="mailto:contact@trevord.live" className="button">
             Contact
           </Link>
-          <Link href="#" className="button">
+          <Link href="/support" className="button">
             Support Quizzable
           </Link>
           <Link href="/login" className="button">
-            Login
+            Log in
           </Link>
           <Link href="/signup" className="button primary">
             Sign up

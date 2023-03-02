@@ -1,12 +1,10 @@
 "use client";
 import PocketBase from "pocketbase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getAuthData } from "../../middleware";
 import { useEffect, useState } from "react";
-import Loading from "../Loading";
+import Loading from "../components/Loading";
 
 import type { User, Set } from "../../lib/types";
-import Navbar from "../Navbar";
 
 function ButtonToStudySet(props: { set: Set }, key: number) {
   const router = useRouter();
@@ -148,12 +146,6 @@ function Page() {
 
   return (
     <main className="flex min-h-screen flex-col items-center">
-      <Navbar
-        user={userData ?? undefined}
-        searchDefault={searchQuery}
-        onSearch={handleSearch}
-      />
-
       <div className="m-5 grid w-[49.25rem] grid-cols-2 gap-5">
         <h1 className="col-span-2 text-left text-2xl">
           Search for {searchQuery}

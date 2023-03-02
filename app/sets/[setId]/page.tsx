@@ -2,14 +2,13 @@
 import PocketBase, { BaseAuthStore } from "pocketbase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import Loading from "../../Loading";
+import Loading from "../../components/Loading";
 import Image from "next/image";
 import CardElem from "./cards";
 // import css from flip.css
 import "./flip.css";
 
 import type { User, Set, EditedSet, Card } from "../../../lib/types";
-import Navbar from "../../Navbar";
 
 function Page({ params }: { params: { setId: string } }) {
   const router = useRouter();
@@ -155,7 +154,6 @@ function Page({ params }: { params: { setId: string } }) {
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center gap-10 pb-10">
-      <Navbar user={userData ?? undefined} />
       <section className="flex w-full max-w-4xl flex-col gap-5 px-10">
         <h1 className="text-left text-3xl font-bold">{setData.title}</h1>
         <div className="grid hidden h-12 w-full grid-cols-5 flex-row justify-between gap-2">

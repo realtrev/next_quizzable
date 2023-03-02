@@ -10,6 +10,11 @@ import SearchBar from "./SearchBar";
 import StudySet from "./StudySet";
 import InteractiveFlashcards from "./InteractiveFlashcards";
 
+export const metadata = {
+  title: "Find new and engaging ways to study | Quizzable",
+  description: "Quizzable is study tool designed to help you learn faster.",
+};
+
 export default function Page() {
   return (
     <div className="cursor-default bg-background-1">

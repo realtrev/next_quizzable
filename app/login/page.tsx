@@ -9,6 +9,9 @@ import { LoadingCircle, LoadingPage } from "../components/Loading";
 import type { ClientResponseError } from "pocketbase";
 
 function Page() {
+  // Set title to Login | Quizzable
+  document.title = "Login | Quizzable";
+
   const pocket = usePocket();
   const searchParams = useSearchParams();
   const router = useRouter();

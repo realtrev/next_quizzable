@@ -25,6 +25,14 @@ export async function middleware(req: NextRequest) {
     new CustomAuthStore()
   );
 
+  if (targetUrl === "/logout") {
+    console.log("Logging out");
+    req.cookies.delete("user");
+    req.cookies.delete("token");
+    pb.authStore.clear();
+    return NextResponse.redirect(new URL("/", req.nextUrl.origin));
+  }
+
   // Get the user from pocketbase
   const userString = req.cookies.get("user")?.value;
   const token = req.cookies.get("token")?.value;
