@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./flip.css";
 
-import type { Card, User } from "../../types";
+import type { Card, User } from "../../../lib/types";
 
 function CardElem(params: { cards: Array<Card> }) {
   const flipCard = () => {
@@ -53,7 +53,7 @@ function CardElem(params: { cards: Array<Card> }) {
   if (!card || !params.cards || params.cards.length === 0) {
     return (
       <div className="card relative h-[32rem]" id="card">
-        <div className="front absolute top-0 z-10 flex flex h-full w-full flex-col items-center justify-center gap-5 rounded-md border border-gray-300 bg-offwhite p-10">
+        <div className="front bg-offwhite absolute top-0 z-10 flex flex h-full w-full flex-col items-center justify-center gap-5 rounded-md border border-gray-300 p-10">
           <h1 className="text-4xl font-bold text-gray-400">
             Cannot find cards
           </h1>
@@ -66,7 +66,7 @@ function CardElem(params: { cards: Array<Card> }) {
     <div className="card relative h-[32rem]" onClick={flipCard} id="card">
       <div
         id="frontCard"
-        className="front absolute top-0 z-10 flex h-full w-full flex-col gap-5 rounded-md border border-gray-300 bg-offwhite p-10"
+        className="front bg-offwhite absolute top-0 z-10 flex h-full w-full flex-col gap-5 rounded-md border border-gray-300 p-10"
       >
         <div className="h-10 w-full">
           <h1 className="text-center text-base font-bold text-gray-600">
@@ -121,7 +121,7 @@ function CardElem(params: { cards: Array<Card> }) {
       </div>
       <div
         id="backCard"
-        className="back absolute top-0 z-0 flex h-full w-full flex-col gap-5 rounded-md border border-gray-300 bg-offwhite p-10"
+        className="back bg-offwhite absolute top-0 z-0 flex h-full w-full flex-col gap-5 rounded-md border border-gray-300 p-10"
       >
         <div className="h-10 w-full">
           <h1 className="text-center text-base font-bold text-gray-600">

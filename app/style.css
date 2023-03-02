@@ -17,23 +17,26 @@
 .hero-card[data-card="1"] {
   --hero-card-rotate: -16deg;
   --hero-card-translate: -15%;
-  @apply bg-gray-700;
+  z-index: 1;
+  @apply bg-white;
 }
 
 .hero-card[data-card="2"] {
   --hero-card-rotate: -2deg;
   --hero-card-translate: -20%;
-  @apply bg-gray-400;
+  z-index: 2;
+  @apply bg-white;
 }
 
 .hero-card[data-card="3"] {
   --hero-card-rotate: 14deg;
   --hero-card-translate: -25%;
-  @apply bg-white;
+  z-index: 3;
+  @apply bg-white hover:cursor-pointer;
 }
 
 .hero-card {
-  @apply rounded-md bg-white p-20 text-center text-xl font-semibold text-gray-600 opacity-0 shadow-2xl shadow-gray-800 lg:opacity-100;
+  @apply rounded-md bg-white p-20 text-center text-xl font-semibold text-gray-600 opacity-0 shadow-2xl shadow-gray-600 lg:opacity-100;
   width: 24rem;
   aspect-ratio: 9/6;
   transition: all ease-in-out;

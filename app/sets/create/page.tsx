@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { ChangeEvent, useEffect, useState } from "react";
 import Loading from "../../Loading";
 
-import type { User, EditedSet, EditedCard } from "../../types";
+import type { User, EditedSet, EditedCard } from "../../../lib/types";
 
 function Page({ params }: { params: { setId: string } }) {
   const router = useRouter();

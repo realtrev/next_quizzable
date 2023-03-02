@@ -8,7 +8,7 @@ import CardElem from "./cards";
 // import css from flip.css
 import "./flip.css";
 
-import type { User, Set, EditedSet, Card } from "../../types";
+import type { User, Set, EditedSet, Card } from "../../../lib/types";
 import Navbar from "../../Navbar";
 
 function Page({ params }: { params: { setId: string } }) {

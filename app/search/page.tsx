@@ -1,11 +1,11 @@
 "use client";
 import PocketBase from "pocketbase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getAuthData } from "../auth";
+import { getAuthData } from "../../middleware";
 import { useEffect, useState } from "react";
 import Loading from "../Loading";
 
-import type { User, Set } from "../types";
+import type { User, Set } from "../../lib/types";
 import Navbar from "../Navbar";
 
 function ButtonToStudySet(props: { set: Set }, key: number) {

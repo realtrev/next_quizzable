@@ -12,7 +12,7 @@ import { useInterval } from "usehooks-ts";
 import jwtDecode from "jwt-decode";
 import { getCookie } from "cookies-next";
 
-import type { User } from "../types";
+import type { User } from "../../lib/types";
 import { LoadingPage } from "../components/Loading";
 import CustomAuthStore from "./CustomAuthStore";
 
