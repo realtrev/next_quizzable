@@ -94,7 +94,7 @@ export const PocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Listen for changes to the auth store
     return pb.authStore.onChange((token: string, model) => {
-      console.log("Auth store changed", token, model);
+      console.log("Auth store changed");
       // Set the token and user
       setToken(token);
       setUser(model as unknown as User);
@@ -133,6 +133,8 @@ export const PocketProvider = ({ children }: { children: React.ReactNode }) => {
         const user: RecordAuthResponse<User> = await pb
           .collection("users")
           .authWithPassword(email, password);
+        setUser(user.record as unknown as User);
+        setLoggedIn(true);
         return user;
       },
       [pb]
@@ -205,7 +207,7 @@ export const PocketProvider = ({ children }: { children: React.ReactNode }) => {
         .collection("users")
         .authRefresh()
         .then((data) => {
-          console.log(data.record);
+          // console.log(data.record);
           pb.authStore.save(data.token, data.record);
           setUser(data.record as unknown as User);
         })

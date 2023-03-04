@@ -64,6 +64,7 @@ const config = {
   experimental: {
     appDir: true,
   },
+  distDir: "build",
 };
 
 export default config;

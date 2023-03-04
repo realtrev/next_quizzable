@@ -1,16 +1,14 @@
 import Link from "next/link";
 
-import "./style.css";
+import "../style.css";
 
 function Footer() {
   return (
-    <footer className="flex bg-primary py-28">
+    <footer className="flex bg-background-2 py-16">
       <div className="mx-auto grid shrink grid-cols-2 items-center justify-center gap-16 px-20">
         <div className="grid grid-cols-2 grid-rows-3 gap-5">
           {[
             { link: "Home", href: "/" },
-            { link: "Features", href: "/#features" },
-            { link: "About Us", href: "/#about" },
             { link: "Contact", href: "mailto:contact@trevord.live" },
             { link: "Support Quizzable", href: "/support" },
             { link: "GitHub", href: "https://github.com/paridax" },

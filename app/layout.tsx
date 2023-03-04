@@ -21,7 +21,7 @@ import type { ReactNode } from "react";
 import { PocketProvider } from "./contexts/PocketContext";
 
 const metadata = {
-  title: "Find new and engaging ways to study | Quizzable",
+  title: "Quizzable",
   description: "Quizzable is study tool designed to help you learn faster.",
 };
 

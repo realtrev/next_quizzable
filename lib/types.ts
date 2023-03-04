@@ -1,60 +1,36 @@
-interface Set extends Record<string, any> {
-  id: string;
+import type { Record } from "pocketbase";
+
+interface StudySet extends Record {
   title: string;
   description: string;
-  created: string;
-  updated: string;
+  visibility: "public" | "unlisted" | "private";
+  cards: Record[];
   author: string;
-  visibility: string;
-  cards: Array<string>;
   published: boolean;
   expand: {
-    author: User;
-    cards: Array<Card> | null;
+    cards?: Card[];
+    author?: User;
   };
 }
 
-interface Card extends Record<string, any> {
-  id: string;
+interface Card extends Record {
   term: string;
   definition: string;
   created: string;
   updated: string;
   set: string;
-  expand: object;
   image: string | null;
 }
 
-interface User extends Record<string, any> {
-  avatar: string;
-  collectionId: string;
-  collectionName: string;
-  created: string;
-  email: string;
-  emailVisibility: boolean;
-  expand: {
-    favoriteSets: Array<Set> | null;
-    sets: Array<Set> | null;
-  };
-  id: string;
-  name: string;
-  sets: Array<string>;
-  favoriteSets: Array<string>;
-  updated: string;
+interface User extends Record {
   username: string;
-  verified: boolean;
+  email: string;
+  sets: string[];
+  favoriteSets: string[];
+  expand: {
+    sets?: StudySet[];
+    favoriteSets?: StudySet[];
+  };
 }
 
-// edited set is the same as server set but with, isEdited: boolean
-interface EditedSet extends Set {
-  isEdited: boolean;
-  isDeleted: boolean;
-}
-
-// edited card is the same as card but with, isEdited: boolean
-interface EditedCard extends Card {
-  isEdited: boolean;
-  isDeleted: boolean;
-}
-
-export type { Set, Card, User, EditedCard, EditedSet };
+export type { StudySet, Card, User };

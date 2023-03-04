@@ -43,7 +43,13 @@ export async function middleware(req: NextRequest) {
   if (user && token) {
     pb.authStore.save(token, user);
 
-    await pb.collection("users").authRefresh();
+    await pb
+      .collection("users")
+      .authRefresh()
+      .catch((err) => {
+        console.log(err);
+        return NextResponse.redirect(new URL(authRedirect, req.nextUrl.origin));
+      });
     if (pb.authStore.isValid) {
       authorized = true;
     } else {

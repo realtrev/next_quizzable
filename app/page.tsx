@@ -1,4 +1,4 @@
-import { AiOutlineUserAdd } from "react-icons/ai";
+import { UserPlusIcon } from "@heroicons/react/24/solid";
 
 import "./style.css";
 
@@ -7,8 +7,9 @@ import Link from "next/link";
 import Footer from "./Footer";
 import Navbar from "./Navbar";
 import SearchBar from "./SearchBar";
-import StudySet from "./StudySet";
+import StudySet from "./components/StudySet";
 import InteractiveFlashcards from "./InteractiveFlashcards";
+import type { User } from "../lib/types";
 
 export const metadata = {
   title: "Find new and engaging ways to study | Quizzable",
@@ -200,7 +201,18 @@ export default function Page() {
                 author: "Daniel Kim",
               },
             ].map((studySet, i) => (
-              <StudySet key={i} studySet={studySet} />
+              <StudySet
+                key={i}
+                studySet={{
+                  id: "#",
+                  title: studySet.title,
+                  description: studySet.description,
+                  terms: studySet.terms,
+                  author: {
+                    username: studySet.author,
+                  } as User,
+                }}
+              />
             ))}
           </div>
           <div className="bg-gradient-radial pointer-events-none absolute top-1/2 left-1/2 -z-50 h-[100%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full from-primary opacity-20"></div>
@@ -264,7 +276,7 @@ export default function Page() {
               href="/signup"
               className="font-nav blurry-shadow-sm group mt-16 flex items-center gap-2 rounded-2xl bg-gradient-to-tl from-secondary to-tertiary p-4 px-10 text-lg text-white shadow-secondary duration-200 hover:-translate-y-2 hover:brightness-110"
             >
-              <AiOutlineUserAdd className="text-2xl text-white duration-200" />
+              <UserPlusIcon className="text-2xl text-white duration-200" />
               Create an account
             </Link>
           </div>

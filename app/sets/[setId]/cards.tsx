@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./flip.css";
 
-import type { Card, User } from "../../../lib/types";
+import type { Card } from "../../../lib/types";
 
 function CardElem(params: { cards: Array<Card> }) {
   const flipCard = () => {

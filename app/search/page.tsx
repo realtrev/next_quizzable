@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Loading from "../components/Loading";
 
-import type { User, Set } from "../../lib/types";
+import type { User, StudySet as Set } from "../../lib/types";
 
 function ButtonToStudySet(props: { set: Set }, key: number) {
   const router = useRouter();

@@ -5,10 +5,14 @@ import { ChangeEvent, useEffect, useState } from "react";
 import Loading from "../../../components/Loading";
 
 import type { User, EditedSet, EditedCard } from "../../../../lib/types";
+import CustomAuthStore from "../../../contexts/CustomAuthStore";
 
 function Page({ params }: { params: { setId: string } }) {
   const router = useRouter();
-  const pb = new PocketBase("https://quizzable.trevord.live");
+  const pb = new PocketBase(
+    "https://quizzable.trevord.live",
+    new CustomAuthStore()
+  );
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null as User | null);
   const [lastSave, setLastSave] = useState(-1 as number);

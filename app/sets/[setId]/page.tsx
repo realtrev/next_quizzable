@@ -2,100 +2,76 @@
 import PocketBase, { BaseAuthStore } from "pocketbase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import Loading from "../../components/Loading";
+import Loading, { LoadingCircle } from "../../components/Loading";
 import Image from "next/image";
 import CardElem from "./cards";
 // import css from flip.css
 import "./flip.css";
 
-import type { User, Set, EditedSet, Card } from "../../../lib/types";
+import type { User, Card, StudySet } from "../../../lib/types";
+import { usePocket } from "../../contexts/PocketContext";
+import Link from "next/link";
 
-function Page({ params }: { params: { setId: string } }) {
+import { HeartIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { HeartIcon as SolidHeartIcon } from "@heroicons/react/24/solid";
+
+async function getSetData(setId: string, pb?: PocketBase) {
+  if (!pb) pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL);
+
+  const set = await pb
+    .collection("sets")
+    .getOne<StudySet>(setId)
+    .catch(() => undefined);
+
+  return set;
+}
+
+function Page({ props }: { props: { setId: string } }) {
   const router = useRouter();
-  const pb = new PocketBase("https://quizzable.trevord.live");
+  const { user, pb } = usePocket();
+
   const [loading, setLoading] = useState(true);
-  const [userData, setUserData] = useState(null as User | null);
-  const [setData, setSetData] = useState(null as EditedSet | null);
   const [isAuthor, setIsAuthor] = useState(false);
+
+  const [studySetData, setStudySetData] = useState(
+    undefined as StudySet | undefined
+  );
+
   const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
-    console.log(params.setId);
+    setLoading(true);
+    getSetData(props.setId, pb)
+      .then((set) => {
+        setStudySetData(set);
 
-    const func = async function () {
-      const response: EditedSet = await pb
-        .collection("sets")
-        .getOne(params.setId, {
-          expand: "author,cards",
-        });
+        if (user && set && set.author === user.id) {
+          setIsAuthor(true);
+        }
 
-      if (!response) {
-        console.error("Set not found");
-        return;
-      }
+        if (user && set && user.favoriteSets.includes(set.id)) {
+          setIsFavorited(true);
+        }
 
-      console.log(response);
-      setSetData(response);
-
-      if (!response.published) {
-        console.log("Set is not published");
-        router.push(`/sets/${response.id}/edit`);
-        return;
-      }
-
-      // check if the user is already logged in
-      const user = pb.authStore;
-      if (user.isValid && user.model) {
-        await getUserData(user, response);
-      }
-      setLoading(false);
-    };
-    func().catch(console.error);
-  }, []);
-
-  async function getUserData(user: BaseAuthStore, response: EditedSet) {
-    console.log(user.model);
-    const id = user.model?.id;
-    if (!user.model || !id) {
-      console.error("No user id found");
-      return;
-    }
-
-    const newUserData: User = await pb
-      .collection("users")
-      .getOne(user.model.id, {
-        expand: "favoriteSets,favoriteSets.author,sets,sets.author",
-      });
-
-    setUserData(newUserData);
-
-    if (newUserData && response.author === newUserData.id) {
-      setIsAuthor(true);
-      console.log("User is set author");
-    }
-
-    // Check if the set is favorited, by whether the set id is in the user's favoriteSets array
-    if (newUserData.favoriteSets) {
-      if (newUserData.favoriteSets.some((set) => set === response.id)) {
-        setIsFavorited(true);
-      }
-    }
-  }
+        setLoading(false);
+      })
+      .catch(console.error);
+  }, [props.setId]);
 
   async function toggleFavorite() {
-    if (!userData) {
+    if (!user) {
       console.error("No user data found");
       return;
     }
 
-    if (!setData) {
+    if (!studySetData) {
       console.error("No set data found");
       return;
     }
 
     // toggle the favorite state
     const response = (await pb
-      .send(`/api/quizzable/favorite/${setData.id}`, {
+      .send(`/api/quizzable/favorite/${studySetData.id}`, {
         method: "PUT",
       })
       .catch(console.error)) as {
@@ -113,12 +89,12 @@ function Page({ params }: { params: { setId: string } }) {
 
   async function deleteSet() {
     console.log("Deleting set");
-    if (!userData) {
+    if (!user) {
       console.error("No user data found");
       return;
     }
 
-    if (!setData) {
+    if (!studySetData) {
       console.error("No set data found");
       return;
     }
@@ -126,7 +102,7 @@ function Page({ params }: { params: { setId: string } }) {
     // delete the set
 
     const response = (await pb
-      .send(`/api/quizzable/sets/${setData.id}`, {
+      .send(`/api/quizzable/sets/${studySetData.id}`, {
         method: "DELETE",
       })
       .catch(console.error)) as {
@@ -142,133 +118,71 @@ function Page({ params }: { params: { setId: string } }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen w-full items-center justify-center">
-        <Loading />
-      </div>
+      <main className="body flex h-96 items-center justify-center">
+        <LoadingCircle />
+      </main>
     );
   }
 
-  if (!setData) {
-    return <div className="min-h-screen w-full">Set data not found</div>;
+  if (!studySetData) {
+    return <div className="body">Set data not found</div>;
   }
 
   return (
-    <main className="flex min-h-screen w-full flex-col items-center gap-10 pb-10">
-      <section className="flex w-full max-w-4xl flex-col gap-5 px-10">
-        <h1 className="text-left text-3xl font-bold">{setData.title}</h1>
-        <div className="grid hidden h-12 w-full grid-cols-5 flex-row justify-between gap-2">
-          {[
-            {
-              title: "Flashcards",
-              link: `/sets/${setData.id}/flashcards`,
-            },
-            {
-              title: "Quiz",
-              link: `/sets/${setData.id}/quiz`,
-            },
-            {
-              title: "Match",
-              link: `/sets/${setData.id}/match`,
-            },
-            {
-              title: "Arcade",
-              link: `/sets/${setData.id}/arcade`,
-            },
-            {
-              title: "Endless",
-              link: `/sets/${setData.id}/game`,
-            },
-          ].map((item: { title: string; link: string }, i: number) => (
-            <button
-              className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
-              onClick={() => router.push(item.link)}
-              key={i}
-            >
-              <h1>{item.title}</h1>
-            </button>
-          ))}
-        </div>
-        <CardElem cards={setData.expand.cards ?? ([] as Card[])} />
-      </section>
-      <section className="flex w-full max-w-4xl flex-col gap-5 px-10">
-        <div className="flex w-full justify-between gap-4">
-          <div className="flex gap-5">
-            <div className="flex hidden h-12 w-12 items-center justify-center rounded-full bg-blue-500"></div>
-            <div className="flex flex-col justify-center">
-              <h1 className="m-0 p-0 text-left text-xs font-normal text-gray-500">
-                Created by
-              </h1>
-              <h1 className="m-0 p-0 text-left text-xl font-medium" id="author">
-                {setData.expand.author.username}
-              </h1>
-            </div>
-          </div>
-          <div className="flex gap-4">
-            {userData ? (
-              <button
-                className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
-                onClick={() => {
-                  toggleFavorite().catch(console.error);
-                }}
-              >
-                <h1>
-                  {isFavorited ? "Remove from Favorites" : "Add to Favorites"}
-                </h1>
-              </button>
+    <main className="body items-center pb-10">
+      <div className="my-10 flex w-full items-center justify-between">
+        <h2>{studySetData.title}</h2>
+        <div className="flex shrink items-center justify-center gap-5">
+          <button
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-background-4 bg-background-3 transition-colors duration-200 ease-in-out hover:border-transparent hover:bg-primary"
+            onClick={toggleFavorite}
+          >
+            {isFavorited ? (
+              <HeartIcon className="h-6 w-6" />
             ) : (
-              <button
-                className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
-                onClick={() =>
-                  router.push(`/login?redirect=/sets/${setData.id}`)
-                }
-              >
-                <h1>Login to favorite</h1>
-              </button>
+              <SolidHeartIcon className="h-6 w-6" />
             )}
+          </button>
+          {isAuthor && (
             <button
-              className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
-              onClick={() => console.log("share")}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-background-4 bg-background-3 transition-colors duration-200 ease-in-out hover:border-transparent hover:bg-primary"
+              onClick={deleteSet}
             >
-              <h1>Share</h1>
+              <TrashIcon className="h-6 w-6" />
             </button>
-            {isAuthor ? (
-              <button
-                className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
-                onClick={() => router.push(`/sets/${setData.id}/edit`)}
+          )}
+        </div>
+      </div>
+
+      <p className="mb-5">{studySetData.description}</p>
+      <section className="flex w-full gap-5">
+        <div>
+          <div className="grid max-h-fit grid-cols-2 gap-5">
+            {[
+              { label: "Flashcards", url: "/flashcards" },
+              { label: "Writing", url: "/writing" },
+              { label: "Quiz", url: "/quiz" },
+              { label: "Test", url: "/test" },
+              { label: "Matching", url: "/matching" },
+              { label: "Timed", url: "/timed" },
+              { label: "Arcade", url: "/arcade" },
+              { label: "Desk Mode", url: "/desk" },
+            ].map((item) => (
+              <Link
+                key={item.label}
+                className="hover:blurry-shadow-sm col-span-1 row-span-1 flex h-28 w-28 flex-col items-center justify-center rounded-md border border-background-3 bg-background-2 shadow-primary transition-all duration-200 ease-in-out hover:border-transparent hover:bg-primary"
+                href={`/sets/${studySetData.id}${item.url}`}
               >
-                <h1>Edit</h1>
-              </button>
-            ) : null}
-            {isAuthor ? (
-              <button
-                className="h-full rounded-md bg-blue-500 px-4 font-bold text-white transition-all duration-200 hover:bg-blue-700"
-                onClick={() => deleteSet().catch(console.error)}
-              >
-                <h1>Delete</h1>
-              </button>
-            ) : null}
+                <h4 className="text-white">{item.label}</h4>
+              </Link>
+            ))}
           </div>
         </div>
-        {setData.description ? (
-          <div className="flex w-full max-w-4xl justify-between gap-4 text-left text-gray-600">
-            <p>{setData.description}</p>
+        <div className="grow">
+          <div className="flex h-[31.75rem] items-center justify-center rounded-xl border border-background-4 bg-background-3">
+            <h2>testing123</h2>
           </div>
-        ) : null}
-      </section>
-      <section className="flex w-full max-w-4xl flex-col gap-5 px-10">
-        {setData?.expand?.cards?.map((card, i) => {
-          return (
-            <div
-              key={i}
-              className="bg-offwhite grid w-full grid-cols-2 gap-5 rounded border border-gray-300 p-5"
-            >
-              <h1 className="col-span-1">{card.term}</h1>
-              <h1 className="col-span-1 font-normal text-gray-600">
-                {card.definition}
-              </h1>
-            </div>
-          );
-        })}
+        </div>
       </section>
     </main>
   );
