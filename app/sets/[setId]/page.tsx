@@ -184,6 +184,17 @@ function Page({ props }: { props: { setId: string } }) {
           </div>
         </div>
       </section>
+      <section className="mt-10 flex w-full gap-5">
+        {studySetData.expand.cards &&
+          studySetData.expand.cards.map((card) => (
+            <div key={card.id} className="flex flex-col gap-5">
+              <div className="flex flex-col gap-5">
+                <h3 className="text-2xl">{card.term}</h3>
+                <h3 className="text-2xl">{card.definition}</h3>
+              </div>
+            </div>
+          ))}
+      </section>
     </main>
   );
 }
